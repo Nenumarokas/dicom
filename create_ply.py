@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 import pydicom as dicom
 import numpy as np
 import cv2 as cv
@@ -55,60 +56,80 @@ def finalize_ply(output_file: str, count: int):
         file.seek(third_line_start)
         file.write(f'element vertex {count:9}\n'.encode('utf-8'))         
 
-def prepare_data(data: list[dicom.FileDataset], threshold: int):
+def prepare_data(data: list[dicom.FileDataset], threshold: tuple[int]) -> list[tuple]:
     timer = time.time()
     image = np.array([dicom.pixel_array(datum) for datum in data])
-    print(f'3D array creation: {round(time.time() - timer, 3)}s')
+    print(f'----3D array creation: {round(time.time() - timer, 3)}s')
     timer = time.time()
 
     min_val = np.min(image)
     max_val = np.max(image)
     image = (image - min_val) / (max_val - min_val) * 255
-    print(f'normalizing: {round(time.time() - timer, 3)}s')
+    print(f'----normalizing: {round(time.time() - timer, 3)}s')
     timer = time.time()
 
-    mask = image > threshold
-    print(f'thresholding: {round(time.time() - timer, 3)}s')
+    mask = image > threshold[0]
+    print(f'----thresholding: {round(time.time() - timer, 3)}s')
     timer = time.time()
     
-    data_as_tuples = np.column_stack((*np.nonzero(mask), image[mask]))
-    print(f'tupling: {round(time.time() - timer, 3)}s')
+    hist, bins = np.histogram(image[mask], bins=256, range=(threshold[0], 255))
+    cdf = hist.cumsum()
+    cdf_normalized = cdf * (255 / cdf[-1])
+    colors_normalized = np.interp(image[mask], bins[:-1], cdf_normalized)
+    print(f'----standartizing colors: {round(time.time() - timer, 3)}s')
+    timer = time.time()
+    
+    data_as_tuples = np.column_stack((*np.nonzero(mask), colors_normalized))
+    print(f'----tupling: {round(time.time() - timer, 3)}s')
     timer = time.time()
     
     return data_as_tuples
 
-def all_at_once(data: list[dicom.FileDataset], height_ratio: float, threshold: int) -> None:
-    assert threshold > 0 and threshold < 255
-    """
-    threshold = 150
-    
-    reading files: 1.282s
-    3D image creation: 0.421s
-    normalizing: 1.052s
-    thresholding: 0.142s
-    tupling: 1.156s
-    writing_to_ply: 42.031s
-    finalizing: 0.003s
-    total time taken: 44.807s
-    """
-    
-    final_timer = time.time()
-    
-    
-    create_new_ply(result_file)
-    data_as_tuples = prepare_data(data, threshold)
-    
+def write_to_ply(result_file: str, data_as_tuples: list[tuple]) -> None:
     with open(result_file, 'ab') as f:
         for point in tqdm(data_as_tuples, ncols=100):
             location = list(map(float, [point[1], point[2], int(point[0]*height_ratio)]))
             color = int(point[3])
             f.write(struct.pack('<fff', *location))
             f.write(struct.pack('<BBB', color, color, color))
-    print(f'writing_to_ply: {round(time.time() - timer, 3)}s')
+
+def all_at_once(result_file: str, data: list[dicom.FileDataset], threshold: tuple[int]) -> None:
+    assert threshold[0] > 0 and threshold[0] < 256
+    assert threshold[1] > 0 and threshold[1] < 256
+    assert threshold[0] < threshold[1]
+    """
+    --threshold = 150
+    
+    reading files: 1.104s
+    preparing ply file: 0.041s
+    ----3D array creation: 0.366s
+    ----normalizing: 0.917s
+    ----thresholding: 0.111s
+    ----standartizing colors: 0.83s
+    ----tupling: 0.839s
+    preparing data: 3.175s
+    writing to ply: 39.981s
+    finalizing ply: 0.003s
+    total time taken: 43.2s
+    """
+    
+    final_timer = time.time()
+    timer = time.time()
+    
+    create_new_ply(result_file)
+    print(f'preparing ply file: {round(time.time() - timer, 3)}s')
+    timer = time.time()
+    
+    data_as_tuples = prepare_data(data, threshold)
+    print(f'preparing data: {round(time.time() - timer, 3)}s')
+    timer = time.time()
+    
+    write_to_ply(result_file, data_as_tuples)
+    print(f'writing to ply: {round(time.time() - timer, 3)}s')
     timer = time.time()
 
     finalize_ply(result_file, len(data_as_tuples))
-    print(f'finalizing: {round(time.time() - timer, 3)}s')
+    print(f'finalizing ply: {round(time.time() - timer, 3)}s')
     print(f'total time taken: {round(time.time() - final_timer, 3)}s')
 
 if __name__ == '__main__':
@@ -128,4 +149,4 @@ if __name__ == '__main__':
     height_ratio = calculate_height_to_width_ratio(folder, *files[:2])
     
     
-    all_at_once(data, height_ratio, threshold=150)
+    all_at_once(result_file, data, threshold=(150, 255))
