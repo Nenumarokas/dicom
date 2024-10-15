@@ -44,7 +44,7 @@ if __name__ == '__main__':
     - can floodfill out the irrelevant stuff
     """
     
-    folder = f'{os.getcwd()}\\Bandymas_1_20240923'
+    folder = f'{os.getcwd()}\\20240923'
 
     files = os.listdir(folder)
     vertex_count = 0
@@ -62,7 +62,8 @@ if __name__ == '__main__':
         # print(image_height)
         # print()
         
-        image = normalize_image(dicom.pixel_array(data))
+        # image = normalize_image(dicom.pixel_array(data))
+        image = normalize_image
         images.append(image)
         
     cv.namedWindow('image')
