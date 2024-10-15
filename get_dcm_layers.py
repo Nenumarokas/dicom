@@ -10,9 +10,7 @@ import os
 
 print('\n \n ')
 
-def normalize_image(image: np.ndarray) -> np.ndarray:
-    min_val = np.min(image)
-    max_val = np.max(image)
+def normalize_image(image: np.ndarray, min_val: float, max_val: float) -> np.ndarray:
     image = (image - min_val) / (max_val - min_val) * 255
     return image.astype(np.uint8)
 
@@ -44,41 +42,35 @@ if __name__ == '__main__':
     - can floodfill out the irrelevant stuff
     """
     
-    folder = f'{os.getcwd()}\\20240923'
+    folder = f'{os.getcwd()}\\20240506'
 
     files = os.listdir(folder)
     vertex_count = 0
     
     images = []
+    
     for file in tqdm(files, ncols=50):
         data = dicom.dcmread(f'{folder}\\{file}')
-        # image_position = data.get((0x0020, 0x0032))
-        # image_orientation = data.get((0x0020, 0x0037))
-        # pixel_spacing = data.get((0x0028, 0x0030))
-        # print(pixel_spacing)
-        
-        # print(image_position)
-        # print(image_orientation)
-        # print(image_height)
-        # print()
-        
-        # image = normalize_image(dicom.pixel_array(data))
-        image = normalize_image
+        image = dicom.pixel_array(data)
         images.append(image)
         
+    min_value = min(np.min(image) for image in images)
+    max_value = max(np.max(image) for image in images)
+    images = [normalize_image(image, min_value, max_value) for image in images]
+    
     cv.namedWindow('image')
     cv.createTrackbar('layer', 'image', 0, len(images)-1, nothing)
-    cv.createTrackbar('threshold', 'image', 0, 255, nothing)
+    cv.createTrackbar('lower_threshold', 'image', 0, 255, nothing)
+    cv.createTrackbar('upper_threshold', 'image', 0, 255, nothing)
         
     while True:
         selected_layer = cv.getTrackbarPos('layer', 'image')
-        selected_threshold = cv.getTrackbarPos('threshold', 'image')
+        lower_threshold = cv.getTrackbarPos('lower_threshold', 'image')
+        upper_threshold = cv.getTrackbarPos('upper_threshold', 'image')
         
         image = images[selected_layer]
-        _, image = cv.threshold(image, selected_threshold, 255, cv.THRESH_TOZERO)
-        # image = remove_largest_contour(image)
-        
-        
+        _, image = cv.threshold(image, lower_threshold, 255, cv.THRESH_TOZERO)
+        _, image = cv.threshold(image, upper_threshold, 255, cv.THRESH_TOZERO_INV)
         
         cv.imshow('image', image)
         if cv.waitKey(1) == ord('q'):
