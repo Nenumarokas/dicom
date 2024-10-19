@@ -68,10 +68,10 @@ def prepare_data(data: list[dicom.FileDataset], threshold: tuple[int]) -> list[t
     crop_mask = np.zeros_like(mask)
     crop_mask[:, 120:250, 120:250] = True
     mask = np.bitwise_and(mask, crop_mask)
-    exported = np.where(mask, image[mask], -1000)
+    exported = np.where(mask, image, 0)
     with open('temp\\data.pkl', 'wb') as f:
         pickle.dump(exported, f)
-    exit()
+    # exit()
 
 
 
@@ -106,7 +106,7 @@ def filter_points(data: list[tuple]):
     return new_data
 
 
-def all_at_once(result_file: str, data: list[dicom.FileDataset], threshold: tuple[int]) -> None:
+def all_at_once(result_file: str, data: list[dicom.FileDataset], height_ratio: float, threshold: tuple[int]) -> None:
     assert threshold[0] > 0 and threshold[0] < 256
     assert threshold[1] > 0 and threshold[1] < 256
     assert threshold[0] < threshold[1]
@@ -129,7 +129,7 @@ def all_at_once(result_file: str, data: list[dicom.FileDataset], threshold: tupl
     final_timer = time.time()
     timer = time.time()
     
-    create_new_ply(result_file)
+    create_new_ply(result_file, colored=True)
     print(f'preparing ply file: {round(time.time() - timer, 3)}s')
     timer = time.time()
     
@@ -141,7 +141,7 @@ def all_at_once(result_file: str, data: list[dicom.FileDataset], threshold: tupl
     # print(f'filtering specific data points: {round(time.time() - timer, 3)}s')
     # timer = time.time()
 
-    write_to_ply(result_file, data_as_tuples)
+    write_to_ply(result_file, data_as_tuples, height_ratio)
     print(f'writing to ply: {round(time.time() - timer, 3)}s')
     timer = time.time()
 
@@ -165,4 +165,4 @@ if __name__ == '__main__':
     
     height_ratio = calculate_height_to_width_ratio(folder, *files[:2])
     
-    all_at_once(result_file, data, threshold=(150, 255))
+    all_at_once(result_file, data, height_ratio, threshold=(150, 255))

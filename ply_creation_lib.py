@@ -2,7 +2,7 @@ from tqdm import tqdm
 import struct
 import os
 
-def create_new_ply(filename: str, colored: bool = False) -> None:
+def create_new_ply(filename: str, colored: bool) -> None:
     """
     Deletes the file it it exists and creates a new one with a ply header.
     """
@@ -34,7 +34,7 @@ def create_new_ply(filename: str, colored: bool = False) -> None:
                 b'end_header\n'
             )
 
-def write_to_ply(result_file: str, data_as_tuples: list[tuple], height_ratio: float) -> None:
+def write_to_ply(result_file: str, data_as_tuples: list[tuple], height_ratio: float, color: int = -1) -> None:
     """
     Data format must be the tuple of:
         - depth value
@@ -45,9 +45,15 @@ def write_to_ply(result_file: str, data_as_tuples: list[tuple], height_ratio: fl
     with open(result_file, 'ab') as f:
         for point in tqdm(data_as_tuples, ncols=100):
             location = list(map(float, [point[2], point[1], -point[0]*height_ratio]))
-            color = int(point[3])
+            if color < 0:
+                selected_color = int(point[3])
+            else:
+                selected_color = color
+            if selected_color < 0 or selected_color > 255:
+                selected_color = 0
+            
             f.write(struct.pack('<fff', *location))
-            f.write(struct.pack('<BBB', color, color, color))
+            f.write(struct.pack('<BBB', selected_color, selected_color, selected_color))
 
 def finalize_ply(output_file: str, count: int) -> None:
     """
