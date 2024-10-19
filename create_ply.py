@@ -2,57 +2,16 @@
 
 from tqdm import tqdm
 from cv3d import make_skeleton
+from ply_creation_lib import create_new_ply, write_to_ply, finalize_ply
 from scipy import ndimage as nd
 import pydicom as dicom
 import numpy as np
 import struct
+import pickle
 import time
 import os
 
 print('\n \n ')
-
-#region PLY
-def create_new_ply(filename: str) -> None:
-    if os.path.exists(filename):
-        os.remove(filename)
-    
-    with open(filename,'wb') as f:
-        f.write(
-            b'ply\n'
-            b'format binary_little_endian  1.0\n'
-            b'element vertex 000000000\n'
-            b'property float x\n'
-            b'property float y\n'
-            b'property float z\n'
-            b'property uchar red\n'
-            b'property uchar green\n'
-            b'property uchar blue\n'
-            b'end_header\n'
-        )
-
-def write_to_ply(result_file: str, data_as_tuples: list[tuple]) -> None:
-    with open(result_file, 'ab') as f:
-        for point in tqdm(data_as_tuples, ncols=100):
-            location = list(map(float, [point[1], point[2], point[0]*height_ratio]))
-            color = int(point[3])
-            f.write(struct.pack('<fff', *location))
-            f.write(struct.pack('<BBB', color, color, color))
-
-def finalize_ply(output_file: str, count: int):
-    with open(output_file, 'rb+') as file:
-        file.readline()
-        file.readline()
-        third_line_start = file.tell()
-        file.seek(third_line_start)
-        original_third_line = file.readline()
-        
-        new_line = f'element vertex 000000000\n'
-        if len(new_line) != len(original_third_line):
-            print("ERROR: New line must have the same number of characters as the original.")
-        
-        file.seek(third_line_start)
-        file.write(f'element vertex {count:9}\n'.encode('utf-8'))
-#endregion PLY
 
 #region DICOM
 def calculate_height_to_width_ratio(folder: str, file1: str, file2: str) -> float:
@@ -102,6 +61,21 @@ def prepare_data(data: list[dicom.FileDataset], threshold: tuple[int]) -> list[t
     mask = filter_data(mask)
     print(f'----filtering data: {round(time.time() - timer, 3)}s')
     timer = time.time()
+
+
+
+
+    crop_mask = np.zeros_like(mask)
+    crop_mask[:, 120:250, 120:250] = True
+    mask = np.bitwise_and(mask, crop_mask)
+    exported = np.where(mask, image[mask], -1000)
+    with open('temp\\data.pkl', 'wb') as f:
+        pickle.dump(exported, f)
+    exit()
+
+
+
+
     
     # mask = make_skeleton(mask)
     # print(f'----making skeleton: {round(time.time() - timer, 3)}s')
@@ -119,6 +93,18 @@ def prepare_data(data: list[dicom.FileDataset], threshold: tuple[int]) -> list[t
     timer = time.time()
     
     return data_as_tuples
+
+def filter_points(data: list[tuple]):
+    width = (120, 250)
+    height = (120, 250)
+
+    new_data = []
+    for datum in data:
+        if height[0] < datum[2] < height[1]:
+            if width[0] < datum[1] < width[1]:
+                new_data.append(datum)
+    return new_data
+
 
 def all_at_once(result_file: str, data: list[dicom.FileDataset], threshold: tuple[int]) -> None:
     assert threshold[0] > 0 and threshold[0] < 256
@@ -150,7 +136,11 @@ def all_at_once(result_file: str, data: list[dicom.FileDataset], threshold: tupl
     data_as_tuples = prepare_data(data, threshold)
     print(f'preparing data: {round(time.time() - timer, 3)}s')
     timer = time.time()
-    
+
+    # data_as_tuples = filter_points(data_as_tuples)
+    # print(f'filtering specific data points: {round(time.time() - timer, 3)}s')
+    # timer = time.time()
+
     write_to_ply(result_file, data_as_tuples)
     print(f'writing to ply: {round(time.time() - timer, 3)}s')
     timer = time.time()
@@ -161,15 +151,15 @@ def all_at_once(result_file: str, data: list[dicom.FileDataset], threshold: tupl
 
 if __name__ == '__main__':
     """
-    total time to create a ply: ~1 min, depending on the threshold
+    total time to create a ply: <1 min, depending on the threshold
     should work with most .dcm files
     """
     timer = time.time()
     folder = f'{os.getcwd()}\\20240506'
     result_file = 'result.ply'
 
-    files = os.listdir(folder)
-    data = [dicom.dcmread(f'{folder}\\{file}') for file in files]
+    files: list[str] = os.listdir(folder)
+    data = [dicom.dcmread(f'{folder}\\{file}') for file in files if file.endswith('.dcm')]
     print(f'reading files: {round(time.time() - timer, 3)}s')
     timer = time.time()
     

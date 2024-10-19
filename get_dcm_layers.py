@@ -61,16 +61,30 @@ if __name__ == '__main__':
     cv.namedWindow('image')
     cv.createTrackbar('layer', 'image', 0, len(images)-1, nothing)
     cv.createTrackbar('lower_threshold', 'image', 0, 255, nothing)
-    cv.createTrackbar('upper_threshold', 'image', 0, 255, nothing)
+    cv.createTrackbar('top_part', 'image', 0, 512, nothing)
+    cv.createTrackbar('bottom_part', 'image', 512, 512, nothing)
+    cv.createTrackbar('left_part', 'image', 0, 512, nothing)
+    cv.createTrackbar('right_part', 'image', 512, 512, nothing)
         
     while True:
         selected_layer = cv.getTrackbarPos('layer', 'image')
         lower_threshold = cv.getTrackbarPos('lower_threshold', 'image')
-        upper_threshold = cv.getTrackbarPos('upper_threshold', 'image')
+        top_part = cv.getTrackbarPos('top_part', 'image')
+        bottom_part = cv.getTrackbarPos('bottom_part', 'image')
+        left_part = cv.getTrackbarPos('left_part', 'image')
+        right_part = cv.getTrackbarPos('right_part', 'image')
         
-        image = images[selected_layer]
+        
+        image = images[selected_layer].copy()
+        image = cv.flip(image, 0)
+        image[:top_part,:] = 0
+        image[:,:left_part] = 0
+        image[:,right_part:] = 0
+        image[bottom_part:,:] = 0
+        print(f'{top_part}-{bottom_part} x {left_part}-{right_part}')
         _, image = cv.threshold(image, lower_threshold, 255, cv.THRESH_TOZERO)
-        _, image = cv.threshold(image, upper_threshold, 255, cv.THRESH_TOZERO_INV)
+        
+        # _, image = cv.threshold(image, upper_threshold, 255, cv.THRESH_TOZERO_INV)
         
         cv.imshow('image', image)
         if cv.waitKey(1) == ord('q'):
