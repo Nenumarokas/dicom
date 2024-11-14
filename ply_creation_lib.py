@@ -1,4 +1,6 @@
 from tqdm import tqdm
+import pydicom as dicom
+import numpy as np
 import struct
 import os
 
@@ -72,3 +74,43 @@ def finalize_ply(output_file: str, count: int) -> None:
         
         file.seek(third_line_start)
         file.write(f'element vertex {count:9}\n'.encode('utf-8'))
+        
+def create_ply(data: np.ndarray, output_file: str, preserve_color: bool = False):
+    """
+    Creates a ply from a 3D numpy array and puts it into a specified file.
+    Height distances are incorrect without specifying the height between pixels.
+    """
+    if not output_file:
+        raise ValueError('\"output_file\" parameter cannot be an empty string')
+    
+    if not np.any(data):
+        raise ValueError("\"data\" parameter cannot be empty")
+    
+    if not output_file.endswith('.ply'):
+        output_file += '.ply'
+    
+    mask = data > 0
+    
+    data_as_tuples = np.column_stack((*np.nonzero(mask), data[mask]))
+    create_new_ply(output_file, colored=True)
+    write_to_ply(output_file, data_as_tuples, height_ratio=0.66, color=-1 if preserve_color else 255)
+    finalize_ply(output_file, len(data_as_tuples))
+    
+def calculate_height_to_width_ratio(folder: str, file1: str, file2: str) -> float:
+    # height_ratio = calculate_height_to_width_ratio(input_folder, *files[:2])
+    data1 = dicom.dcmread(f'{folder}\\{file1}')
+    data2 = dicom.dcmread(f'{folder}\\{file2}')
+    height_1 = data1.get((0x0020, 0x0032)).value[2]
+    height_2 = data2.get((0x0020, 0x0032)).value[2]
+    height_diff = abs(height_2 - height_1)
+    pixel_spacing = data1.get((0x0028, 0x0030)) # x and y distances between pixels should be equal
+    height_ratio = height_diff / pixel_spacing[0]
+    return height_ratio
+    
+def create_ply_tupled(data_as_tuples: list[tuple], output_file: str, height_ratio: float):
+    """
+    
+    """
+    create_new_ply(output_file, colored=True)
+    write_to_ply(output_file, data_as_tuples, height_ratio=height_ratio)
+    finalize_ply(output_file, len(data_as_tuples))

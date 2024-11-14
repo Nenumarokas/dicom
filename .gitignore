@@ -165,3 +165,7 @@ cython_debug/
 *.txt
 *.ply
 temp/data.pkl
+/show
+/temp
+/unused
+/plys
