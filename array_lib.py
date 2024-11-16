@@ -96,13 +96,6 @@ def distinguish_3d(mask: np.ndarray):
         
         counter += 1
         empty[blob_coords[:, 0], blob_coords[:, 1], blob_coords[:, 2]] = True
-        
-        # if len(blob_coords) > 1000\
-        #     and len(blob_coords) < 100000\
-        #     and coordinate_bounds_3d(blob_coords) > 1e6:
-            
-        #     counter += 1
-        #     empty[blob_coords[:, 0], blob_coords[:, 1], blob_coords[:, 2]] = True
     
     print(f'\t--dividing blobs: {round(time.time() - timer, 3)}s')
     timer = time.time()

@@ -44,6 +44,7 @@ class Point:
         path = path.copy()
         if self.end and distance > 0:
             return distance, path
+        
         unvisited = [p for p in self.nearby if p not in path]
         if len(unvisited) == 0:
             return distance, path
@@ -54,6 +55,22 @@ class Point:
             distance_paths.append(point.distance_to_far_end(path, distance+1))
         distance_paths.sort(key = lambda x: x[0])        
         return distance_paths[-1]
+    
+    def path_to_end(self, last_point: 'Point', path: list['Point'] = [], distance: int = 0):
+        path = path.copy()
+        if self.end and self == last_point:
+            return distance, path
+        
+        unvisited = [p for p in self.nearby if p not in path]
+        if len(unvisited) == 0:
+            return -1, path
+
+        path.append(self)
+        for point in unvisited:
+            result = point.path_to_end(last_point=last_point, path=path, distance=distance+1)
+            if result[0] > 0:
+                return result
+        return -1, path
 
     def calculate_angle(self) -> float:
         if self.nearby != 2:
@@ -62,6 +79,9 @@ class Point:
         left_point = self.nearby[0].coordinates.copy()
         right_point = self.nearby[1].coordinates.copy()
         self.angle = 1
+        
+    def distance_to_point(self, another: 'Point') -> float:
+        return np.linalg.norm(self.coordinates - another.coordinates)
 
     def __str__(self):
         return f'{self.coordinates} ({len(self.nearby)})'
