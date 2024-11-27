@@ -88,27 +88,21 @@ class Point:
         v - current point coords to the plane intersection
         np - most top-facing vector on a plane of an artery cross section centered on a skeleton point
         """
-        if len(self.nearby) != 2:
+        if len(self.nearby) > 2:
             return False
         
-        point1 = self.nearby[0].coordinates.copy()
-        point2 = self.nearby[1].coordinates.copy()
-        diff_vector = (point1 - point2).astype(float)
+        if len(self.nearby) == 1:
+            point1 = self.nearby[0].coordinates.copy()
+            diff_vector = (point1 - self.coordinates)
+        else:
+            point1 = self.nearby[0].coordinates.copy()
+            point2 = self.nearby[1].coordinates.copy()
+            diff_vector = (point1 - point2).astype(float)
         
-        if diff_vector[0] == 0 and diff_vector[1] == 0:
-            # if the plane is horizontal or non-existant
-            return False
-        
-        # n = (p2-p1) / |p2-p1|
-        plane_normal = diff_vector / np.linalg.norm(diff_vector)
-        # d = |n·p| / n.z
-        vertical_intersection = np.dot(plane_normal, self.coordinates) / plane_normal[2]
-        # v = (0, 0, d) - p
-        vertical_point = np.array([0, 0, vertical_intersection]) - self.coordinates
-        vertical_point = vertical_point if vertical_intersection > 0 else -vertical_point
-        # np = (v / |v|) + p
-        self.top_normal = (vertical_point / np.linalg.norm(vertical_point)) + self.coordinates
-            
+        up_vector = np.array([0.0, 0.0, 1.0])
+        norm_diff_vector = diff_vector / np.linalg.norm(diff_vector)
+        normal = up_vector - np.dot(np.dot(up_vector, norm_diff_vector), norm_diff_vector)
+        self.top_normal = normal / np.linalg.norm(normal) #+ self.coordinates
         return True
         
     def get_neighbour_top_normal_average(self) -> bool:
@@ -121,8 +115,9 @@ class Point:
         for point in self.nearby:
             if not point.is_top_normal_set():
                 return False
-            average += point.top_normal - point.coordinates
-        self.top_normal = average / len(self.nearby) + self.coordinates
+            average += point.top_normal #- point.coordinates
+        average_normal = average / len(self.nearby) #+ self.coordinates
+        self.top_normal = average_normal / np.linalg.norm(average_normal)
         return True
         
     def is_top_normal_set(self):
@@ -161,13 +156,21 @@ if __name__ == '__main__':
     
     skeleton = [point1, point2, point3, point4, point5]
     
-    for point in skeleton:
-        print('----')
-        point.calculate_top_normal()
+    failed_points: list[Point] = []
+    for i, point in enumerate(skeleton):
+        print(f'{i+1}----')
+        success = point.calculate_top_normal()
+        if not success:
+            failed_points.append(point)
+    # print()
+    # for i, point in enumerate(failed_points):
+    #     print(f'\n{i+1} ----')
+    #     print(point)
+    #     print(f'nearby: {point.nearby}:')
+    #     for n in point.nearby:
+    #         print(n.top_normal - n.coordinates)
+    #     point.get_neighbour_top_normal_average()
     
-    print('\n')
-    for point in skeleton:
-        point.get_neighbour_top_normal_average()
-    
+    print('\n \n ')
     for i, point in enumerate(skeleton):
         print(tuple([round(i, 2) for i in point.top_normal]))

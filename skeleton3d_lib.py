@@ -85,6 +85,16 @@ class Skeleton:
             new_skeletons.append(new_skeleton)
         return new_skeletons
     
+    def calculate_normals(self) -> None:
+        for point in self.points:
+            point.calculate_top_normal()
+    
+    def __iter__(self):
+        yield from self.points
+        
+    def __getitem__(self, index):
+        return self.points[index]
+    
     def __str__(self) -> str:
         return f'{self.name} - {len(self.points)} points'
     
