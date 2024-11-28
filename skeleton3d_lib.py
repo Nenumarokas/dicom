@@ -80,6 +80,11 @@ class Skeleton:
             
             new_skeleton = Skeleton(self.name, end_counter)
             new_skeleton.add_branch_points(path)
+            
+            heads = new_skeleton.ends
+            heads.sort(key = lambda end: np.linalg.norm(end.coordinates - self.head.coordinates))
+            new_skeleton.head = heads[0]
+            
             end_counter += 1
             
             new_skeletons.append(new_skeleton)
@@ -87,7 +92,7 @@ class Skeleton:
     
     def calculate_normals(self) -> None:
         for point in self.points:
-            point.calculate_top_normal()
+            point.calculate_top_normal(self.head)
     
     def __iter__(self):
         yield from self.points

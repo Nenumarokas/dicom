@@ -78,7 +78,7 @@ class Point:
                 return result
         return -1, path
 
-    def calculate_top_normal(self) -> bool:
+    def calculate_top_normal(self, skeleton_head: 'Point') -> bool:
         """
         p - current point coords
         p1 - neighbour 1 coords
@@ -102,7 +102,14 @@ class Point:
         up_vector = np.array([0.0, 0.0, 1.0])
         norm_diff_vector = diff_vector / np.linalg.norm(diff_vector)
         normal = up_vector - np.dot(np.dot(up_vector, norm_diff_vector), norm_diff_vector)
+        
+        if np.linalg.norm(normal) == 0:
+            vector_to_head = self.coordinates - skeleton_head.coordinates
+            self.top_normal = vector_to_head / np.linalg.norm(vector_to_head)
+            return True
+        
         self.top_normal = normal / np.linalg.norm(normal) #+ self.coordinates
+        
         return True
         
     def get_neighbour_top_normal_average(self) -> bool:
@@ -116,7 +123,7 @@ class Point:
             if not point.is_top_normal_set():
                 return False
             average += point.top_normal #- point.coordinates
-        average_normal = average / len(self.nearby) #+ self.coordinates
+        average_normal = average / len(self.nearby) + self.coordinates
         self.top_normal = average_normal / np.linalg.norm(average_normal)
         return True
         
@@ -134,11 +141,11 @@ class Point:
 
 if __name__ == '__main__':
     print('\n \n ')
-    point1 = Point(np.array([0, 1, 2]))
-    point2 = Point(np.array([1, 1, 3]))
-    point3 = Point(np.array([1, 2.5, 4]))
-    point4 = Point(np.array([2, 3, 4]))
-    point5 = Point(np.array([3, 4, 3]))
+    point1 = Point(np.array([2, 1, 4]))
+    point2 = Point(np.array([3, 1, 4]))
+    point3 = Point(np.array([3, 1, 5]))
+    point4 = Point(np.array([3, 1, 6]))
+    point5 = Point(np.array([2, 1, 6]))
     
     point1.add_nearby(point2)
     
@@ -162,6 +169,10 @@ if __name__ == '__main__':
         success = point.calculate_top_normal()
         if not success:
             failed_points.append(point)
+            
+    # for point in failed_points:
+    #     point.get_neighbour_top_normal_average()
+        
     # print()
     # for i, point in enumerate(failed_points):
     #     print(f'\n{i+1} ----')
@@ -173,4 +184,4 @@ if __name__ == '__main__':
     
     print('\n \n ')
     for i, point in enumerate(skeleton):
-        print(tuple([round(i, 2) for i in point.top_normal]))
+        print(tuple([np.round(point.coordinates[i] + n, 2) for i, n in enumerate(point.top_normal)]))
