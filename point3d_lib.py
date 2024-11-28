@@ -9,6 +9,7 @@ class Point:
         self.coordinates: np.ndarray = coordinates
         self.nearby: list[Point] = []
         self.value: int = 0
+        self.flow_vector: np.ndarray = np.array([0.0, 0.0, 0.0])
         self.top_normal: np.ndarray = np.array([0.0, 0.0, 0.0])
         self.cross: bool = False
         self.end: bool = False
@@ -78,6 +79,20 @@ class Point:
                 return result
         return -1, path
 
+    def project_to_plane(self, vector):
+        P = vector
+        f = self.flow_vector
+        top_part = np.dot(P, f)
+        bottom_part = np.dot(f, f)
+        return P - np.dot((top_part/bottom_part), f)
+
+    def rotate_normal(self, angle: float):
+        cos_t = np.cos(angle)
+        sin_t = np.sin(angle)
+        flow = self.flow_vector
+        normal = self.top_normal
+        self.top_normal = np.dot(cos_t, normal) + np.dot(sin_t, np.cross(flow, normal))
+
     def calculate_top_normal(self, skeleton_head: 'Point') -> bool:
         """
         p - current point coords
@@ -99,16 +114,20 @@ class Point:
             point2 = self.nearby[1].coordinates.copy()
             diff_vector = (point1 - point2).astype(float)
         
-        up_vector = np.array([0.0, 0.0, 1.0])
         norm_diff_vector = diff_vector / np.linalg.norm(diff_vector)
+        self.flow_vector = norm_diff_vector
+        
+        up_vector = np.array([0.0, 0.0, 1.0])
         normal = up_vector - np.dot(np.dot(up_vector, norm_diff_vector), norm_diff_vector)
         
         if np.linalg.norm(normal) == 0:
             vector_to_head = self.coordinates - skeleton_head.coordinates
-            self.top_normal = vector_to_head / np.linalg.norm(vector_to_head)
+            projected = self.project_to_plane(vector_to_head)
+            self.top_normal = projected / np.linalg.norm(projected)
             return True
         
-        self.top_normal = normal / np.linalg.norm(normal) #+ self.coordinates
+        projected = self.project_to_plane(normal)
+        self.top_normal = projected / np.linalg.norm(projected)
         
         return True
         
