@@ -64,7 +64,7 @@ def write_to_ply_normals(result_file: str, data: Skeleton, height_ratio: float) 
     with open(result_file, 'ab') as f:
         for point in tqdm(data, ncols=100):
             coords = point.coordinates
-            normal = point.top_normal
+            normal = point.normal
             point_location = list(map(float, [coords[2], coords[1], -coords[0]*height_ratio]))
             normal_location = list(map(float, [normal[2], normal[1], -normal[0]*height_ratio]))
             f.write(struct.pack('<fff', *point_location))

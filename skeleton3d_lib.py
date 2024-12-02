@@ -1,5 +1,6 @@
-import numpy as np
 from point3d_lib import Point
+from numpy.linalg import norm
+import numpy as np
 
 class Skeleton:
     def __init__(self, name: str, id: int = -1):
@@ -82,7 +83,7 @@ class Skeleton:
             new_skeleton.add_branch_points(path)
             
             heads = new_skeleton.ends
-            heads.sort(key = lambda end: np.linalg.norm(end.coordinates - self.head.coordinates))
+            heads.sort(key = lambda end: norm(end.coordinates - self.head.coordinates))
             new_skeleton.head = heads[0]
             
             end_counter += 1
@@ -91,13 +92,47 @@ class Skeleton:
         return new_skeletons
     
     def calculate_normals(self) -> None:
+        if len(self.points) < 10:
+            print('too little points')
+            return
+        
+        # calculate the tangents for all points
+        for i in range(len(self.points)-1):
+            last_point = self.points[i].coordinates
+            point = self.points[i+1].coordinates
+            tangent = point - last_point
+            self.points[i].tangent = tangent / norm(tangent)
+        self.points[-1].tangent = self.points[-2].tangent.copy()
+        
+        # choose a normal for the first point
+        if self.points[0].tangent[2] == 1:
+            self.points[0].normal = np.array([0, 1, 0])    
+        else:
+            self.points[0].normal = np.array([0, 0, 1])
+        
+        # calculate the normals for the remaining points
+        for i in range(1, len(self.points)-1):
+            last_normal = self.points[i-1].normal
+            tangent = self.points[i].tangent
+            normal = last_normal - np.dot(np.dot(last_normal, tangent), tangent)
+            self.points[i].normal = normal / norm(normal)
+        self.points[-1].normal = self.points[-2].normal.copy()
+            
+        # calculate the binomials for all points
         for point in self.points:
-            point.calculate_top_normal(self.head)
+            binormal = np.cross(point.tangent, point.normal)
+            point.binormal = binormal / norm(binormal)
+        
+        
+        
+        
+        # for point in self.points:
+        #     point.calculate_top_normal(self.head)
     
     def __iter__(self):
         yield from self.points
         
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> Point:
         return self.points[index]
     
     def __str__(self) -> str:
