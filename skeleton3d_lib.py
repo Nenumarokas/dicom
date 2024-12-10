@@ -1,15 +1,22 @@
 from point3d_lib import Point
 from numpy.linalg import norm
+from scipy.interpolate import CubicSpline
 import numpy as np
+import copy
 
 class Skeleton:
-    def __init__(self, name: str, id: int = -1):
+    def __init__(self, name: str = "", id: int = -1):
         self.id: int = id
         self.name: str = name
         self.points: list[Point] = []
         self.ends: list[Point] = []
         self.head: Point = np.array([0, 0, 0])
-        
+    
+    def create(self, point_list: np.ndarray, skeleton_mask: np.ndarray, center_point: Point) -> None:
+        self.add_points(point_list, skeleton_mask)
+        self.remove_close_ends()
+        self.find_head_point(center_point)
+    
     def add_points(self, point_list: np.ndarray, skeleton_mask: np.ndarray) -> None:
         if len(point_list) == 0:
             return
@@ -43,7 +50,7 @@ class Skeleton:
     
     def remove_close_ends(self, threshold: int = 20) -> None:
         """
-        Remove skeleton ends if they are closer then \'threshold\'
+        Remove skeleton ends if they are closer than \'threshold\'
         distance away to the nearest cross
         """
         removed = True
@@ -122,12 +129,52 @@ class Skeleton:
         for point in self.points:
             binormal = np.cross(point.tangent, point.normal)
             point.binormal = binormal / norm(binormal)
+            
+    def interpolate(self, step: float = 0.1) -> 'Skeleton':
+        skeleton = copy.deepcopy(self).smoothe_skeleton()
+        skeleton: 'Skeleton'
+        points = np.array([p.coordinates for p in skeleton])
+        cs_x = CubicSpline(range(len(points)), points[:, 0])
+        cs_y = CubicSpline(range(len(points)), points[:, 1])
+        cs_z = CubicSpline(range(len(points)), points[:, 2])
         
+        new_parameter_values = np.linspace(0, len(points)-1, int(len(points) / step))
+        new_x = cs_x(new_parameter_values)
+        new_y = cs_y(new_parameter_values)
+        new_z = cs_z(new_parameter_values)
         
+        new_values = np.vstack([new_x, new_y, new_z]).T
+        skeleton.points = [Point(val) for val in new_values]
+        return skeleton
+    
+    def smoothe_skeleton(self) -> 'Skeleton':
+        old_skeleton = copy.deepcopy(self)
+        smoothe = lambda arr, i: (arr[i-1].coordinates+arr[i].coordinates+arr[i+1].coordinates)/3
+        for i in range(1, len(self) - 1):
+            self[i].coordinates = smoothe(old_skeleton, i)
+        return self
+    
+    def split_into_branches(self, min_skeleton_length: int):
+        branches = self.create_new_path_skeletons(min_skeleton_length)
+        if len(branches) == 1:
+            return branches
         
+        branches.sort(key = lambda x: len(x))
+        branches = branches[-2:]
         
-        # for point in self.points:
-        #     point.calculate_top_normal(self.head)
+        if not branches[0].branches_are_same(branches[1]):
+            return branches
+        
+        return [max(branches, key = lambda x: len(x))]
+    
+    def branches_are_same(self, other: 'Skeleton', min_match: float = 0.5) -> bool:
+        self_coords = np.array([str(point) for point in self.points])
+        other_coords = np.array([str(point) for point in other.points])
+        shorter_length = min(len(self), len(other))
+        
+        in_both = np.intersect1d(self_coords, other_coords)
+        return len(in_both) > shorter_length * min_match
+        
     
     def __iter__(self):
         yield from self.points
@@ -136,10 +183,14 @@ class Skeleton:
         return self.points[index]
     
     def __str__(self) -> str:
-        return f'{self.name} - {len(self.points)} points'
+        if len(self.name) > 1:
+            return f'{self.name} - {len(self.points)} points'
+        return f'{len(self.points)} points'
     
     def __repr__(self) -> str:
-        return f'{self.name} - {len(self.points)} points'
+        if len(self.name) > 1:
+            return f'{self.name} - {len(self.points)} points'
+        return f'{len(self.points)} points'
     
     def __len__(self) -> int:
         return len(self.points)

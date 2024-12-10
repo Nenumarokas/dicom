@@ -91,9 +91,9 @@ class Point:
     def rotate_normal(self, angle: float):
         cos_t = np.cos(angle)
         sin_t = np.sin(angle)
-        flow = self.tangent
+        tangent = self.tangent
         normal = self.normal
-        self.normal = np.dot(cos_t, normal) + np.dot(sin_t, np.cross(flow, normal))
+        self.normal = np.dot(cos_t, normal) + np.dot(sin_t, np.cross(tangent, normal))
 
     def calculate_top_normal(self, skeleton_head: 'Point') -> bool:
         """
