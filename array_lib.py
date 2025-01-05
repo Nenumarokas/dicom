@@ -40,9 +40,9 @@ def floodfill_3d_mask(mask: np.ndarray, seed: tuple = (0, 0, 0)) -> np.ndarray:
 
 def threshold_3d(image: np.ndarray, threshold: int, new_value: int, threshold_type: int):
     if threshold_type == cv.THRESH_BINARY:
-        return np.where(image > threshold, image, new_value)
+        return np.where(image < threshold, 0, new_value)
     if threshold_type == cv.THRESH_BINARY_INV:
-        return np.where(image < threshold, image, new_value)
+        return np.where(image < threshold, new_value, 0)
     return image
 
 def crop_array(image: np.ndarray, padding: int = 0):
@@ -247,3 +247,41 @@ def custom_floodfill_3d(image: np.ndarray, seed_point: tuple[int], new_value: in
             if cz - 1 >= 0: stack.append((cx, cy, cz - 1))
 
     return visited
+
+def get_largest_contour(layer: np.ndarray) -> list:
+    _, thresh = cv.threshold(layer, 1, 255, cv.THRESH_BINARY)
+    contours, _ = cv.findContours(thresh, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)    
+    return max(contours, key = lambda x: cv.contourArea(x))
+
+def get_contour_center(contour):
+    moments = cv.moments(contour)
+    center_x = int(moments["m10"] / moments["m00"])
+    center_y = int(moments["m01"] / moments["m00"])
+    return (center_x, center_y)
+
+def find_aorta(image: np.ndarray) -> tuple[int, int]:
+    largest_contour = get_largest_contour(image)
+    return get_contour_center(largest_contour)
+
+def flood_single_layer(image: np.ndarray, seed: tuple[int, int]):
+    _, thresh = cv.threshold(image, 1, 100, cv.THRESH_BINARY)
+    _, flooded, _, _ = cv.floodFill(thresh, None, seed, 255)
+    _, flooded = cv.threshold(flooded, 200, 255, cv.THRESH_BINARY)
+    return flooded
+
+def filter_horizontal_slices(image: np.ndarray, first_layer: int):
+    image = image.copy()
+    aorta_seed = find_aorta(image[first_layer])
+    flooded = flood_single_layer(image[first_layer], aorta_seed)
+    next_seed = aorta_seed
+
+    for i in tqdm(range(first_layer, image.shape[0]-first_layer), ncols=100):
+        _, thresholded = cv.threshold(image[i], 1, 100, cv.THRESH_BINARY)
+        cv.circle(thresholded, next_seed, 25, 100, -1)
+        flooded = flood_single_layer(thresholded, next_seed)
+        _, thresholded = cv.threshold(flooded, 200, 255, cv.THRESH_BINARY)
+        largest_contour = get_largest_contour(thresholded)
+        next_seed = get_contour_center(largest_contour)
+        cv.drawContours(image[i], [largest_contour], 0, 0, -1)
+
+    return image
