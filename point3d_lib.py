@@ -147,7 +147,7 @@ class Point:
         average_normal = average / len(self.nearby) + self.coordinates
         self.normal = average_normal / np.linalg.norm(average_normal)
         return True
-        
+    
     def is_top_normal_set(self):
         return np.any(self.normal != 0) and np.any(self.normal != -1)
         

@@ -174,7 +174,10 @@ class Skeleton:
         
         in_both = np.intersect1d(self_coords, other_coords)
         return len(in_both) > shorter_length * min_match
-        
+    
+    def rotate_normals(self, angle: float):
+        for point in self.points:
+            point.rotate_normal(angle)
     
     def __iter__(self):
         yield from self.points
