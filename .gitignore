@@ -171,3 +171,4 @@ temp/data.pkl
 *.txt
 *.ply
 /plane_MPR
+*.npy

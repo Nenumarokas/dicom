@@ -31,6 +31,9 @@ def floodfill_3d_mask(mask: np.ndarray, seed: tuple = (0, 0, 0)) -> np.ndarray:
     if mask.dtype != bool:
         raise ValueError('\"mask\" parameter must be of boolean type.')
     
+    if type(seed) == np.ndarray:
+        seed = tuple(seed)
+
     structure = np.ones((3, 3, 3), dtype=int)
     image = mask.astype(int)
     
