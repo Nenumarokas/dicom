@@ -1,9 +1,11 @@
 from tqdm import tqdm
 from array_lib import *
+from ply_creation_lib import create_ply
 import pydicom as dicom
 import numpy as np
 import cv2 as cv
 import pickle
+import copy
 import os
 
 def read_dicom(input_folder: str) -> np.ndarray:
@@ -19,6 +21,16 @@ def normalize_image_colors(image: np.ndarray) -> np.ndarray:
     image = (image - min_val) / (max_val - min_val) * 255
     return image.astype(np.uint8)
 
+def clip_image_colors(image: np.ndarray) -> np.ndarray:
+    image = copy.deepcopy(image)
+    
+    min_val = 50
+    max_val = 2000
+    image = np.where((image > min_val) | (image < max_val), image, 0)
+    image = (image - min_val) / (max_val - min_val) * 200
+    image = np.where(image > 0, image + 55, 0)
+    return image.astype(np.uint8)
+
 def preprocess_image(image: np.ndarray) -> np.ndarray:
     offsets = (-15, 20)
     seed = (20, 310, 160)
@@ -28,9 +40,22 @@ def preprocess_image(image: np.ndarray) -> np.ndarray:
 def within_bounds(x, y):
     return 10 < x < image.shape[1]-10 and 10 < y < image.shape[2]-10
 
-def draw(image: np.ndarray, x: int, y: int, size: int, mark: bool = True):
+def draw(original_image: np.ndarray, annotation_image: np.ndarray, x: int, y: int, size: int, mark: bool, show: bool, flood: bool = False):
     kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (size, size)).astype(bool)
 
+    if flood:
+        if original_image[x, y] == 0:
+            return
+        
+        if show:
+            copied = original_image.copy()
+            _, _, b, _ = cv.floodFill(copied, None, (x, y), 255, 20, 20)
+            b: np.ndarray = b[1:-1, 1:-1].astype(bool)
+            annotation_image[b] = ~annotation_image[b]
+        else:
+            annotation_image[y-3:y+2, x-3:x+2] = True
+        return
+    
     for i in range(size):
         for j in range(size):
             if not kernel[i, j]:
@@ -39,10 +64,12 @@ def draw(image: np.ndarray, x: int, y: int, size: int, mark: bool = True):
             yj = y - size//2 + j
             if not within_bounds(xi, yj):
                 continue
-            image[yj, xi] = mark
+            annotation_image[yj, xi] = (mark==1)
     
 def draw_annotation(event, x, y, flags, param):
-    global drawing, drawing_size, mark
+    x = x//2
+    y = y//2
+    global drawing, drawing_size, mark, floodfill
     if not within_bounds(x, y):
         return
 
@@ -51,15 +78,16 @@ def draw_annotation(event, x, y, flags, param):
         last_x = x
         last_y = y
 
+    # flood = flags & cv.EVENT_FLAG_CTRLKEY
     match event:
         case cv.EVENT_LBUTTONUP:
             drawing = False
         case cv.EVENT_LBUTTONDOWN:
             drawing = True
-            draw(annotated[selected_layer], x, y, drawing_size, mark)
+            draw(image[selected_layer], annotated[selected_layer], x, y, drawing_size, mark, show=True, flood=floodfill)
         case cv.EVENT_MOUSEMOVE:
             if drawing:
-               draw(annotated[selected_layer], x, y, drawing_size, mark)
+               draw(image[selected_layer], annotated[selected_layer], x, y, drawing_size, mark, show=True, flood=floodfill)
         case cv.EVENT_RBUTTONUP:
             mark = not mark
         case _:
@@ -74,19 +102,23 @@ def draw_kernel(image: np.ndarray, x: int, y: int, size: int):
                 image[x+size//2, y+size//2] = kernel[i, j]
     return image
 
-def join_images(image: np.ndarray, annotated: np.ndarray, selected_layer: int, x: int, y: int, size: int):
+def join_images(image: np.ndarray, true_image: np.ndarray, annotated: np.ndarray, selected_layer: int, mark: bool, x: int, y: int, size: int, floodfill: bool):
     shown_image = cv.cvtColor(image[selected_layer], cv.COLOR_GRAY2BGR)
+    true_slice = cv.cvtColor(true_image[selected_layer], cv.COLOR_GRAY2BGR)
     annotated_shown = shown_image.copy()
     annotated_copy = annotated[selected_layer].copy()
-    draw(annotated_copy, x, y, size, mark)
+    draw(image[selected_layer], annotated_copy, x, y, size, mark, show=False)
     annotated_shown[annotated_copy] = (0, 0, 255)
 
-    annotated_shown = cv.addWeighted(shown_image, 0.8, annotated_shown, 0.2, 0)
+    annotated_shown = cv.addWeighted(shown_image, 0.5, annotated_shown, 0.5, 0)
+    true_slice = cv.addWeighted(true_slice, 0.8, annotated_shown, 0.2, 0)
     
-    joined = cv.hconcat((annotated_shown, shown_image))
-    joined = cv.copyMakeBorder(joined, 0, 100, 0, 0, cv.BORDER_CONSTANT, value=(255, 255, 255))
-    cv.putText(joined, f'{selected_layer+1}/{image.shape[0]}', (400, image.shape[1]+70), cv.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
-    cv.putText(joined, f'size: {size}', (0, image.shape[1]+70), cv.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
+    joined = cv.hconcat((annotated_shown, true_slice))
+    cv.putText(joined, f'{selected_layer+1}/{image.shape[0]}', (image.shape[0]*3//4, 50), cv.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
+    mark_sign = '+' if mark else '-'
+    flood_sign = 'F' if floodfill else ''
+    cv.putText(joined, f'{size}{mark_sign}{flood_sign}', (image.shape[0]*3//5, image.shape[1]-20), cv.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
+    cv.putText(joined, f'{size}', (image.shape[0]*3//5, image.shape[1]-20), cv.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
     return joined
 
 def save_annotations(annotation_file: str, annotated: np.ndarray):
@@ -102,7 +134,8 @@ if __name__ == '__main__':
     annotation_file = f'{folder_name}_annotation.npy'
     
     image = read_dicom(f'{os.getcwd()}\\{folder_name}')
-    image = normalize_image_colors(image)
+    true_image = normalize_image_colors(image)
+    image = clip_image_colors(image)
     image = preprocess_image(image)
     
     annotated = np.zeros_like(image).astype(bool)
@@ -110,7 +143,8 @@ if __name__ == '__main__':
         annotated = read_annotations(annotation_file)
 
     selected_layer = 20
-    drawing_size = 25
+    drawing_size = 9
+    floodfill = False
     mark = True
     last_x = 100
     last_y = 100
@@ -120,7 +154,9 @@ if __name__ == '__main__':
     cv.setMouseCallback('image', draw_annotation)
 
     while True:
-        joined = join_images(image, annotated, selected_layer, last_x, last_y, drawing_size)
+        joined = join_images(image, true_image, annotated, selected_layer, mark, last_x, last_y, drawing_size, floodfill)
+        
+        joined = cv.resize(joined, (joined.shape[1]*2, joined.shape[0]*2))
         cv.imshow('image', joined)
         
         key = cv.waitKey(1)
@@ -143,6 +179,8 @@ if __name__ == '__main__':
                     selected_layer -= 10
                 else:
                     selected_layer = 0
+            case 97:# a
+                floodfill = not floodfill
             case 114:# r
                 annotated[selected_layer][:] = False
             case 120:# x
@@ -155,4 +193,4 @@ if __name__ == '__main__':
                 continue
     
     save_annotations(annotation_file, annotated)
-    
+    create_ply(annotated, 'annotations.ply')
