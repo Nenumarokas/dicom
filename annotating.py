@@ -21,11 +21,8 @@ def normalize_image_colors(image: np.ndarray) -> np.ndarray:
     image = (image - min_val) / (max_val - min_val) * 255
     return image.astype(np.uint8)
 
-def clip_image_colors(image: np.ndarray) -> np.ndarray:
+def clip_image_colors(image: np.ndarray, min_val: int, max_val: int) -> np.ndarray:
     image = copy.deepcopy(image)
-    
-    min_val = 50
-    max_val = 2000
     image = np.where((image > min_val) | (image < max_val), image, 0)
     image = (image - min_val) / (max_val - min_val) * 200
     image = np.where(image > 0, image + 55, 0)
@@ -38,7 +35,7 @@ def preprocess_image(image: np.ndarray) -> np.ndarray:
     return np.where(image_mask, image+50, image)
 
 def within_bounds(x, y):
-    return 10 < x < image.shape[1]-10 and 10 < y < image.shape[2]-10
+    return 10 < x < image.shape[1] - 10 and 10 < y < image.shape[2] - 10
 
 def draw(original_image: np.ndarray, annotation_image: np.ndarray, x: int, y: int, size: int, mark: bool, show: bool, flood: bool = False):
     kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (size, size)).astype(bool)
@@ -128,19 +125,36 @@ def read_annotations(annotation_file: str):
     return np.load(annotation_file)
 
 if __name__ == '__main__':
+    timer = time.time()
     print('\n \n ')
     
-    folder_name = '20240923_84'
+    folder_name = '20250224_48'
     annotation_file = f'{folder_name}_annotation.npy'
+
+    min_val = 50
+    max_val = 2000
     
     image = read_dicom(f'{os.getcwd()}\\{folder_name}')
+    print(f'reading: {round(time.time() - timer, 2)}s')
+    timer = time.time()
+
+
     true_image = normalize_image_colors(image)
-    image = clip_image_colors(image)
-    image = preprocess_image(image)
+    print(f'normalizing: {round(time.time() - timer, 2)}s')
+    timer = time.time()
+
+    image = clip_image_colors(image, min_val, max_val)
+    print(f'clipping: {round(time.time() - timer, 2)}s')
+    timer = time.time()
+    
+    # image = preprocess_image(image)
     
     annotated = np.zeros_like(image).astype(bool)
     if os.path.exists(annotation_file):
         annotated = read_annotations(annotation_file)
+
+    print(f'annotations: {round(time.time() - timer, 2)}s')
+    timer = time.time()
 
     selected_layer = 20
     drawing_size = 9
@@ -153,6 +167,9 @@ if __name__ == '__main__':
     drawing = False
     cv.setMouseCallback('image', draw_annotation)
 
+    print(f'setting up: {round(time.time() - timer, 2)}s')
+    timer = time.time()
+
     while True:
         joined = join_images(image, true_image, annotated, selected_layer, mark, last_x, last_y, drawing_size, floodfill)
         
@@ -161,8 +178,8 @@ if __name__ == '__main__':
         
         key = cv.waitKey(1)
         match key:
-            case 113:# q
-                break
+            case 97:# a
+                floodfill = not floodfill
             case 100:# d
                 if selected_layer > 0:
                     selected_layer -= 1
@@ -174,6 +191,10 @@ if __name__ == '__main__':
                     selected_layer += 10
                 else:
                     selected_layer = image.shape[0] - 1
+            case 113:# q
+                break
+            case 114:# r
+                annotated[selected_layer][:] = False
             case 115:# s
                 if selected_layer > 10:
                     selected_layer -= 10
@@ -191,6 +212,9 @@ if __name__ == '__main__':
                     drawing_size -= 2
             case _:
                 continue
+    
+    if np.sum(annotated.astype(int)) < 1000:
+        exit()
     
     save_annotations(annotation_file, annotated)
     create_ply(annotated, 'annotations.ply')
