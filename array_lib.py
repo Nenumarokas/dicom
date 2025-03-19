@@ -199,6 +199,24 @@ def find_closest_skeletons(image: np.ndarray, image_center: tuple[int]) -> list[
     skeletons_width_distances.sort(key = lambda x: x[2])
     return [(i[0], i[1]) for i in skeletons_width_distances[:2]]
 
+def find_skeletons(image: np.ndarray) -> list[np.ndarray]:
+    timer = time.time()
+    structure = np.ones((3, 3, 3))
+    labeled_array, num_features = nd.label(image, structure=structure)
+    print(f'\t--labeling: {round(time.time() - timer, 3)}s')
+    timer = time.time()
+    
+    skeletons_width_distances = []
+    for label_num in range(1, num_features + 1):
+        flat_indices = np.flatnonzero(labeled_array == label_num)
+        blob_indices = np.unravel_index(flat_indices, labeled_array.shape)
+        blob_coords = np.column_stack(blob_indices)
+        skeletons_width_distances.append(blob_coords)
+    print(f'\t--dividing blobs: {round(time.time() - timer, 3)}s')
+
+    skeletons_width_distances.sort(key = lambda x: len(x), reverse=True)
+    return skeletons_width_distances[:2]
+
 def floodfill_nearby_skeletons(image: np.ndarray, skeletons: list):
     image = image.astype(int)
     for skeleton in skeletons:

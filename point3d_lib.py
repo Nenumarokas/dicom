@@ -15,6 +15,7 @@ class Point:
         self.projection_magnitude: int = 0
         self.cross: bool = False
         self.end: bool = False
+        self.valid: bool = True
 
     def add_nearby(self, point: 'Point') -> None:
         self.nearby.append(point)
@@ -50,6 +51,7 @@ class Point:
     def distance_to_far_end(self, path: list['Point'] = [], distance: int = 0)\
             -> tuple[int, list['Point']]:
         path = path.copy()
+
         if self.end and distance > 0:
             return distance, path
         
@@ -70,7 +72,11 @@ class Point:
         if self.end and self == last_point:
             return distance, path
         
-        unvisited = [p for p in self.nearby if p not in path]
+        if len(path) != len(set(path)):
+            return -1, []
+        
+        unvisited = [p for p in self.nearby if (p not in path) and p.valid]
+        
         if len(unvisited) == 0:
             return -1, path
 

@@ -3,6 +3,7 @@ from numpy.linalg import norm
 from scipy.interpolate import CubicSpline
 import numpy as np
 import copy
+import time
 
 class Skeleton:
     def __init__(self, name: str = "", id: int = -1):
@@ -12,11 +13,20 @@ class Skeleton:
         self.ends: list[Point] = []
         self.head: Point = np.array([0, 0, 0])
     
-    def create(self, point_list: np.ndarray, skeleton_mask: np.ndarray, center_point: Point) -> None:
+    def create(self, point_list: np.ndarray, skeleton_mask: np.ndarray) -> None:
         self.add_points(point_list, skeleton_mask)
         self.remove_close_ends()
-        self.find_head_point(center_point)
-    
+        self.find_head_point_highest()
+        self.invalidate_points()
+
+    def invalidate_points(self) -> None:
+        """
+        marks some points as invalid for searches if it is in a blob
+        """
+        for point in self.points:
+            if len([p for p in point.nearby if p.cross]) > 5:
+                point.valid = False
+
     def add_points(self, point_list: np.ndarray, skeleton_mask: np.ndarray) -> None:
         if len(point_list) == 0:
             return
@@ -77,11 +87,35 @@ class Skeleton:
                 closest_point = point
                 min_distance = dist
         self.head = closest_point
+
+    def find_head_point_highest(self) -> None:
+        """
+        Find the starting end of a skeleton - the highest one vertically.
+        """
+        midpoint = np.mean([p.coordinates for p in self.points], axis=0)
+        print(f'midpoint: {midpoint}')
+        if midpoint[2] > 256:
+            crosses = [p for p in self.points if p.cross]
+            if len(crosses) > 0:
+                crosses.sort(key = lambda x: x.coordinates[2])
+                self.head = crosses[0]
+                print(1)
+            else:
+                ends = [p for p in self.points if p.end and p.coordinates[0] < midpoint[0]]
+                ends.sort(key = lambda x: x.coordinates[2], reverse=True)
+                self.head = ends[0]
+                print(2)
+        else:
+            ends = [p for p in self.points if p.end and p.coordinates[0] < midpoint[0]]
+            ends.sort(key = lambda x: x.coordinates[2], reverse=True)
+            self.head = ends[0]
+            print(3)
+        print(self.head)
         
     def create_new_path_skeletons(self, min_length: int) -> list['Skeleton']:
         new_skeletons = []
         end_counter = 1
-        for end in self.ends:
+        for endid, end in enumerate(self.ends):
             path = self.head.path_to_end(end)[1]
             if len(path) < min_length:
                 continue
@@ -154,18 +188,27 @@ class Skeleton:
             self[i].coordinates = smoothe(old_skeleton, i)
         return self
     
-    def split_into_branches(self, min_skeleton_length: int):
+    def split_into_branches(self, min_skeleton_length: int) -> list:
         branches = self.create_new_path_skeletons(min_skeleton_length)
-        if len(branches) == 1:
+
+        if len(branches) == 0:
+            return None
+        elif len(branches) == 1:
             return branches
+
+        branches.sort(key = lambda x: len(x), reverse=True)
+        # branches = branches[:2]
+
+        # if not branches[0].branches_are_same(branches[1]):
+        #     return branches
         
-        branches.sort(key = lambda x: len(x))
-        branches = branches[-2:]
-        
-        if not branches[0].branches_are_same(branches[1]):
-            return branches
-        
-        return [max(branches, key = lambda x: len(x))]
+        # return [max(branches, key = lambda x: len(x))]
+    
+        longest_branch = branches[0]
+        for branch in branches[1:]:
+            if not longest_branch.branches_are_same(branch):
+                return [longest_branch, branch]
+        return [longest_branch]
     
     def branches_are_same(self, other: 'Skeleton', min_match: float = 0.5) -> bool:
         self_coords = np.array([str(point) for point in self.points])
@@ -179,6 +222,9 @@ class Skeleton:
         for point in self.points:
             point.rotate_normal(angle)
     
+    def to_numpy(self) -> np.ndarray:
+        return np.array([p.coordinates for p in self.points])
+
     def __iter__(self):
         yield from self.points
         

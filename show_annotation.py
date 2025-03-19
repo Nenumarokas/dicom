@@ -12,7 +12,7 @@ def read_annotations(annotation_file: str):
     return np.load(annotation_file)
 
 if __name__ == '__main__':
-    annotation_file = f'{os.getcwd()}/20240923_84_annotation.npy'
+    annotation_file = f'{os.getcwd()}/20250222_37_annotation.npy'
     
     annotation = read_annotations(annotation_file)
     

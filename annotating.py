@@ -2,11 +2,17 @@ from tqdm import tqdm
 from array_lib import *
 from ply_creation_lib import create_ply
 import pydicom as dicom
+import nibabel as nib
 import numpy as np
 import cv2 as cv
 import pickle
 import copy
 import os
+
+def read_nii(nii_path: str) -> np.ndarray:
+    nii_img = nib.load(nii_path)  # Load NIfTI file
+    numpy_array = nii_img.get_fdata()  # Get image data as NumPy array
+    return numpy_array
 
 def read_dicom(input_folder: str) -> np.ndarray:
     files: list[str] = os.listdir(input_folder)
@@ -126,18 +132,23 @@ def read_annotations(annotation_file: str):
 
 if __name__ == '__main__':
     timer = time.time()
-    print('\n \n ')
     
-    folder_name = '20250224_48'
-    annotation_file = f'{folder_name}_annotation.npy'
+    dcm_folder = '20250224_48'
+    nii_file = '1.img.nii.gz'
+    dcm_mode = False
 
     min_val = 50
     max_val = 2000
-    
-    image = read_dicom(f'{os.getcwd()}\\{folder_name}')
+    if dcm_mode:
+        annotation_file = f'{dcm_folder}_annotation.npy'
+        image = read_dicom(f'{os.getcwd()}\\{dcm_folder}')
+    else:
+        annotation_file = f'{nii_file}_annotation.npy'
+        image = read_nii(f'{os.getcwd()}\\dataset\\all\\{nii_file}')
+        image = np.transpose(image, (2, 1, 0))
+
     print(f'reading: {round(time.time() - timer, 2)}s')
     timer = time.time()
-
 
     true_image = normalize_image_colors(image)
     print(f'normalizing: {round(time.time() - timer, 2)}s')
