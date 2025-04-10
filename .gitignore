@@ -174,3 +174,5 @@ temp/data.pkl
 *.npy
 *.gz
 *.xlsx
+*.pth
+/models

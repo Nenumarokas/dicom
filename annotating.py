@@ -9,11 +9,6 @@ import pickle
 import copy
 import os
 
-def read_nii(nii_path: str) -> np.ndarray:
-    nii_img = nib.load(nii_path)  # Load NIfTI file
-    numpy_array = nii_img.get_fdata()  # Get image data as NumPy array
-    return numpy_array
-
 def read_dicom(input_folder: str) -> np.ndarray:
     files: list[str] = os.listdir(input_folder)
     data = [dicom.dcmread(f'{input_folder}\\{file}') for file in files if file.endswith('.dcm')]
@@ -47,12 +42,14 @@ def draw(original_image: np.ndarray, annotation_image: np.ndarray, x: int, y: in
     kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (size, size)).astype(bool)
 
     if flood:
-        if original_image[x, y] == 0:
+        original_color = original_image[y, x]
+        if original_color == 0:
             return
         
         if show:
             copied = original_image.copy()
-            _, _, b, _ = cv.floodFill(copied, None, (x, y), 255, 20, 20)
+            _, thresh = cv.threshold(copied, 1, 255, cv.THRESH_BINARY)
+            _, _, b, _ = cv.floodFill(thresh, None, (x, y), 255)
             b: np.ndarray = b[1:-1, 1:-1].astype(bool)
             annotation_image[b] = ~annotation_image[b]
         else:
@@ -133,19 +130,12 @@ def read_annotations(annotation_file: str):
 if __name__ == '__main__':
     timer = time.time()
     
-    dcm_folder = '20250224_48'
-    nii_file = '1.img.nii.gz'
-    dcm_mode = False
+    dcm_folder = '20241209_17'
 
-    min_val = 50
+    min_val = 150
     max_val = 2000
-    if dcm_mode:
-        annotation_file = f'{dcm_folder}_annotation.npy'
-        image = read_dicom(f'{os.getcwd()}\\{dcm_folder}')
-    else:
-        annotation_file = f'{nii_file}_annotation.npy'
-        image = read_nii(f'{os.getcwd()}\\dataset\\all\\{nii_file}')
-        image = np.transpose(image, (2, 1, 0))
+    annotation_file = f'annotations\\{dcm_folder}_annotation.npy'
+    image = read_dicom(f'{os.getcwd()}\\{dcm_folder}')
 
     print(f'reading: {round(time.time() - timer, 2)}s')
     timer = time.time()
