@@ -165,10 +165,8 @@ temp/data.pkl
 /temp
 /unused
 /plys
-!requirements.txt
 *.dicom
 *.dcm
-*.txt
 *.ply
 /plane_MPR
 *.npy
@@ -176,3 +174,4 @@ temp/data.pkl
 *.xlsx
 *.pth
 /models
+ka reikia.txt
