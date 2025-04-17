@@ -93,24 +93,19 @@ class Skeleton:
         Find the starting end of a skeleton - the highest one vertically.
         """
         midpoint = np.mean([p.coordinates for p in self.points], axis=0)
-        print(f'midpoint: {midpoint}')
         if midpoint[2] > 256:
             crosses = [p for p in self.points if p.cross]
             if len(crosses) > 0:
                 crosses.sort(key = lambda x: x.coordinates[2])
                 self.head = crosses[0]
-                print(1)
             else:
                 ends = [p for p in self.points if p.end and p.coordinates[0] < midpoint[0]]
                 ends.sort(key = lambda x: x.coordinates[2], reverse=True)
                 self.head = ends[0]
-                print(2)
         else:
             ends = [p for p in self.points if p.end and p.coordinates[0] < midpoint[0]]
             ends.sort(key = lambda x: x.coordinates[2], reverse=True)
             self.head = ends[0]
-            print(3)
-        print(self.head)
         
     def create_new_path_skeletons(self, min_length: int) -> list['Skeleton']:
         new_skeletons = []

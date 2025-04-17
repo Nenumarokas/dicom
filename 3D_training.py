@@ -6,22 +6,12 @@ import matplotlib.pyplot as plt
 import monai.losses as losses
 import torch.optim as optim
 import numpy as np
+import random
 import torch
 import time
 import copy
 import json
 import os
-
-def get_prepared_data(folder: str) -> list[dict[str, np.ndarray]]:
-    filenames = os.listdir(f'd:\\dicom\\my_dataset\\{folder}\\scans')
-    filenames.sort(key = lambda x: int(x.split('.')[0]))
-
-    data = []
-    for filename in tqdm(filenames, desc='loading data'):
-        scan = np.load(f'd:\\dicom\\my_dataset\\{folder}\\scans\\{filename}').astype(np.int16)
-        mask = np.load(f'd:\\dicom\\my_dataset\\{folder}\\masks\\{filename}').astype(np.int16)
-        data.append((scan, mask))
-    return data
 
 def read_annotation(annotation_file: str) -> np.ndarray:
     return np.load(annotation_file)
@@ -32,23 +22,28 @@ def dice_coefficient(pred, target):
     return (2. * intersection + smooth) / (pred.sum() + target.sum() + smooth)
 
 class DataLoaderDataset(Dataset):
-    def __init__(self, data_folder: str, filenames: list):
-        self.data_folder = data_folder
+    def __init__(self, disks: list[str], filenames: list):
+        self.data_folders = disks
         self.filenames = filenames
 
     def __len__(self):
         return len(self.filenames)
 
     def __getitem__(self, idx):
+        disk = random.choice(self.data_folders)
+
         filename = self.filenames[idx]
-        scan = np.load(f'{self.data_folder}/scans/{filename}')
-        mask = np.load(f'{self.data_folder}/masks/{filename}')
-        scan = torch.tensor(scan, dtype=torch.float32).unsqueeze(0)
-        mask = torch.tensor(mask, dtype=torch.float32).unsqueeze(0)
+        scan = np.load(f'{disk}/scans/{filename}')
+        mask = np.load(f'{disk}/masks/{filename}')
+        scan = torch.from_numpy(scan).unsqueeze(0)
+        mask = torch.from_numpy(mask).unsqueeze(0)
         return (scan, mask)
 
-def prepare_data(folder: str, train_size: float, test_size: float):
-    filenames = os.listdir(f'{folder}/scans')
+def prepare_data(folders: list[str], train_size: float, test_size: float, batch_size: int, workers: int):
+    filenames = os.listdir(f'{folders[0]}/scans')
+
+    random.seed(11)
+    random.shuffle(filenames)
 
     validation_filenames, training_filenames = train_test_split(
         filenames,
@@ -61,13 +56,13 @@ def prepare_data(folder: str, train_size: float, test_size: float):
         random_state=11)
 
 
-    train_dataset = DataLoaderDataset(folder, training_filenames)
-    val_dataset = DataLoaderDataset(folder, validation_filenames)
-    test_dataset = DataLoaderDataset(folder, testing_filenames)
+    train_dataset = DataLoaderDataset(folders, training_filenames)
+    val_dataset = DataLoaderDataset(folders, validation_filenames)
+    test_dataset = DataLoaderDataset(folders, testing_filenames)
 
-    train_loader = DataLoader(train_dataset, batch_size=2, shuffle=True, num_workers=0, pin_memory=True)
-    val_loader = DataLoader(val_dataset, batch_size=2, shuffle=True, num_workers=0, pin_memory=True)
-    test_loader = DataLoader(test_dataset, batch_size=2, shuffle=True, num_workers=0, pin_memory=True)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
 
     return (train_loader, val_loader, test_loader)
 
@@ -80,16 +75,21 @@ if __name__ == '__main__':
 
     model_output_folder = f'{os.getcwd()}/models'    
     selected_data_folder = 'nii_augmented'
-    location_folder = f'/mnt/d/dicom/my_dataset/{selected_data_folder}'
-    num_epochs = 1
+    location_folders = [
+        f'/mnt/c/Users/mariu/Downloads/train_dataset/my_dataset/{selected_data_folder}',
+        f'/mnt/d/dicom/my_dataset/{selected_data_folder}']
+    num_epochs = 100
+    batch_size = 8
+    workers = 4
 
     print(os.getcwd())
 
 
     timer = time.time()
-    train_loader, val_loader, test_loader = prepare_data(location_folder, train_size, test_size)
-    print(f'preparing data: {round(time.time()-timer, 2)}')
+    train_loader, val_loader, test_loader = prepare_data(location_folders, train_size, test_size, batch_size, workers)
+    print(f'preparing data: {round(time.time()-timer, 2)}s')
     timer = time.time()
+
 
 
     model = UNet(
@@ -101,10 +101,16 @@ if __name__ == '__main__':
         num_res_units=1
     ).to('cuda')
 
+    # dice_loss = losses.DiceLoss(sigmoid=True)
+    # bce_loss = torch.nn.BCEWithLogitsLoss()
+    # criterion = lambda pred, target: 0.5 * dice_loss(pred, target) + 0.5 * bce_loss(pred, target)
     criterion = losses.DiceLoss(sigmoid=True)
+
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
-    print(f'loading model: {round(time.time()-timer, 2)}')
+    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3)
+
+    print(f'loading model: {round(time.time()-timer, 2)}s')
     timer = time.time()
 
     metrics = {'train_loss': [], 'train_dice': [], 'val_loss': [], 'val_dice': []}
@@ -114,6 +120,7 @@ if __name__ == '__main__':
         epoch_dice = 0.0
 
         for scans, masks in tqdm(train_loader, desc=f'Epoch {epoch+1}/{num_epochs}'):
+
             scans, masks = scans.to('cuda'), masks.to('cuda')
 
             optimizer.zero_grad()
@@ -123,7 +130,7 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
 
-            outputs_bin = torch.sigmoid(outputs) > 0.5
+            outputs_bin = (torch.sigmoid(outputs) > 0.5).float()
             dice = dice_coefficient(outputs_bin, masks)
 
             epoch_loss += loss.item()
@@ -151,11 +158,15 @@ if __name__ == '__main__':
                 for test_scans, test_masks in vbar:
                     test_scans, test_masks = test_scans.to('cuda'), test_masks.to('cuda')
                     test_outputs = model(test_scans)
+
                     val_loss += criterion(test_outputs, test_masks).item()
+                    test_outputs = torch.sigmoid(test_outputs) > 0.5
                     val_dice += dice_coefficient(test_outputs, test_masks).item()
 
         val_loss /= len(val_loader)
         val_dice /= len(val_loader)
+
+        # scheduler.step(val_loss)
 
         val_results = f'validation - loss: {val_loss:.4f}, dice: {val_dice:.4f}'
 
@@ -165,16 +176,21 @@ if __name__ == '__main__':
         print(f'{train_results} | {val_results}', end='')
 
 
-    print(f'total time taken to train: {round(time.time()-timer, 2)}')
+    time_taken = time.time() - timer
+    print(f'\ntotal time taken to train: {round(time_taken)}seconds')
+    print(f'\ntotal time taken to train: {round(time_taken/3600, 2)}hours')
 
 
 
-    last_model_number = max(int(i[5:]) for i in os.listdir(model_output_folder))
-    selected_folder = f'{model_output_folder}\\train{last_model_number+1}'
+    last_model_number = max(int(i.split('_')[0][5:]) for i in os.listdir(model_output_folder))
+    selected_folder = f'{model_output_folder}/train{last_model_number+1}'
     os.mkdir(selected_folder)
 
-    torch.save(model.state_dict(), f'{selected_folder}\\model.pth')
-    with open(f'{selected_folder}\\metrics.json', 'w') as f:
+    torch.save(model.state_dict(), f'{selected_folder}/model.pth')
+    with open(f'{selected_folder}/metrics.json', 'w') as f:
         json.dump(metrics, f, indent=4)
-
     print(f'saved as \"{selected_folder}\"')
+
+    with open(f'{selected_folder}/time.txt', 'w') as f:
+        f.write(f'{time_taken}')
+
