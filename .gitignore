@@ -175,3 +175,4 @@ temp/data.pkl
 *.pth
 /models
 ka reikia.txt
+/full/results

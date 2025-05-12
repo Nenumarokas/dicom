@@ -2,8 +2,9 @@ import matplotlib.pyplot as plt
 import json
 import os
 
-selected_folder = f'D:\\OneDrive - Kaunas University of Technology\\univeras\\bakalauras\\dicom\\models\\train27'
-with open(f'{selected_folder}\\metrics.json', 'r') as f:
+model = 'train33_calcinate'
+selected_folder = f'{os.getcwd()}/models/{model}'
+with open(f'{selected_folder}/metrics.json', 'r') as f:
     metrics = json.load(f)
 
 plt.figure(figsize=(10, 8))

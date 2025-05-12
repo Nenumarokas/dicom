@@ -7,6 +7,7 @@ import monai.losses as losses
 import torch.optim as optim
 import numpy as np
 import random
+import shutil
 import torch
 import time
 import copy
@@ -73,7 +74,14 @@ if __name__ == '__main__':
     augment_count = 4
     from_annotations = True
 
-    model_output_folder = f'{os.getcwd()}/models'    
+
+    model_output_folder = f'{os.getcwd()}/models'   
+    last_model_number = max(int(i.split('_')[0][5:]) for i in os.listdir(model_output_folder))
+    selected_folder = f'{model_output_folder}/train{last_model_number+1}_vessel'
+    os.mkdir(selected_folder)
+
+
+     
     selected_data_folder = 'nii_augmented'
     location_folders = [
         f'/mnt/c/Users/mariu/Downloads/train_dataset/my_dataset/{selected_data_folder}',
@@ -82,22 +90,17 @@ if __name__ == '__main__':
     batch_size = 8
     workers = 4
 
-    print(os.getcwd())
-
-
     timer = time.time()
     train_loader, val_loader, test_loader = prepare_data(location_folders, train_size, test_size, batch_size, workers)
     print(f'preparing data: {round(time.time()-timer, 2)}s')
     timer = time.time()
 
-
-
     model = UNet(
         spatial_dims=3,
         in_channels=1,
         out_channels=1,
-        channels=(16, 32, 64, 128, 256),
-        strides=(2, 2, 2, 2),
+        channels=(16, 32, 64, 128),
+        strides=(2, 2, 2),
         num_res_units=1
     ).to('cuda')
 
@@ -113,6 +116,8 @@ if __name__ == '__main__':
     print(f'loading model: {round(time.time()-timer, 2)}s')
     timer = time.time()
 
+    best_val_loss = 1.0
+    best_val_dice = 0.0
     metrics = {'train_loss': [], 'train_dice': [], 'val_loss': [], 'val_dice': []}
     for epoch in range(num_epochs):
         model.train()
@@ -166,7 +171,12 @@ if __name__ == '__main__':
         val_loss /= len(val_loader)
         val_dice /= len(val_loader)
 
-        # scheduler.step(val_loss)
+        if val_loss < best_val_loss or val_dice > best_val_dice:
+            best_val_loss = val_loss
+            best_val_dice = val_dice
+            torch.save(model.state_dict(), f'{selected_folder}/model.pth')
+
+
 
         val_results = f'validation - loss: {val_loss:.4f}, dice: {val_dice:.4f}'
 
@@ -182,9 +192,6 @@ if __name__ == '__main__':
 
 
 
-    last_model_number = max(int(i.split('_')[0][5:]) for i in os.listdir(model_output_folder))
-    selected_folder = f'{model_output_folder}/train{last_model_number+1}'
-    os.mkdir(selected_folder)
 
     torch.save(model.state_dict(), f'{selected_folder}/model.pth')
     with open(f'{selected_folder}/metrics.json', 'w') as f:
@@ -193,4 +200,6 @@ if __name__ == '__main__':
 
     with open(f'{selected_folder}/time.txt', 'w') as f:
         f.write(f'{time_taken}')
+
+    shutil.copy(__file__, f'{selected_folder}/training_file.py')
 

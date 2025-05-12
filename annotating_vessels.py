@@ -130,12 +130,14 @@ def read_annotations(annotation_file: str):
 if __name__ == '__main__':
     timer = time.time()
     
-    dcm_folder = '20241209_17'
+    dcm_folder = '20250224_48'
 
     min_val = 150
     max_val = 2000
+    # main_scan_file = f'annotations\\{dcm_folder}_main.npy'
     annotation_file = f'annotations\\{dcm_folder}_annotation.npy'
     image = read_dicom(f'{os.getcwd()}\\{dcm_folder}')
+    # save_annotations(main_scan_file, image)
 
     print(f'reading: {round(time.time() - timer, 2)}s')
     timer = time.time()
