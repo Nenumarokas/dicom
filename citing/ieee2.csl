@@ -299,16 +299,14 @@
       </if>
     </choose>
   </macro>
-  <citation  collapse="citation-number">
-        <sort>	
-            <key variable="citation-number" sort="ascending"/>
-        </sort>
-        
-        <layout prefix="[" suffix="]" delimiter=",">
-            <text variable="citation-number"/>
-        </layout>
-        
-    </citation>
+  <citation collapse="citation-number">
+    <layout prefix="[" suffix="]" delimiter=", ">
+      <group delimiter=", ">
+        <text variable="citation-number"/>
+        <text macro="citation-locator"/>
+      </group>
+    </layout>
+  </citation>
   <bibliography entry-spacing="0" second-field-align="flush">
     <layout>
       <text variable="citation-number" prefix="[" suffix="]"/>
