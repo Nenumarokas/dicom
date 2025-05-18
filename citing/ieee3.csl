@@ -262,19 +262,6 @@
       </else>
     </choose>
   </macro>
-  <macro name="citation-locator">
-    <group delimiter=" ">
-      <choose>
-        <if locator="page">
-          <label variable="locator" form="short"/>
-        </if>
-        <else>
-          <label variable="locator" form="short" text-case="capitalize-first"/>
-        </else>
-      </choose>
-      <text variable="locator"/>
-    </group>
-  </macro>
   <macro name="geographic-location">
     <group delimiter=", " suffix=".">
       <choose>
@@ -299,14 +286,13 @@
       </if>
     </choose>
   </macro>
-  <citation>
+  <citation collapse="citation-number">
     <sort>
       <key variable="citation-number"/>
     </sort>
-    <layout delimiter=", ">
-      <group delimiter=", " prefix="[" suffix="]">
+    <layout prefix="[" suffix="]" delimiter=", ">
+      <group delimiter=", ">
         <text variable="citation-number"/>
-        <text macro="citation-locator"/>
       </group>
     </layout>
   </citation>
