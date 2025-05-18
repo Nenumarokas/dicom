@@ -23,6 +23,24 @@ def dice_coefficient(pred, target):
     intersection = (pred * target).sum()
     return (2. * intersection + smooth) / (pred.sum() + target.sum() + smooth)
 
+def iou_score(pred, target):
+    smooth = 1e-6
+    intersection = (pred * target).sum()
+    union = pred.sum() + target.sum() - intersection
+    return (intersection + smooth) / (union + smooth)
+
+def precision_score(pred, target):
+    smooth = 1e-6
+    tp = (pred * target).sum()
+    fp = (pred * (1 - target)).sum()
+    return (tp + smooth) / (tp + fp + smooth)
+
+def recall_score(pred, target):
+    smooth = 1e-6
+    tp = (pred * target).sum()
+    fn = ((1 - pred) * target).sum()
+    return (tp + smooth) / (tp + fn + smooth)
+
 class DataLoaderDataset(Dataset):
     def __init__(self, disks: list[str], filenames: list):
         self.data_folders = disks
@@ -85,8 +103,8 @@ def prepare_vessel_model(vessel_model_location: str, device: str):
         spatial_dims=3,
         in_channels=1,
         out_channels=1,
-        channels=(16, 32, 64, 128),
-        strides=(2, 2, 2),
+        channels=(16, 32, 64, 128, 256),
+        strides=(2, 2, 2, 2),
         num_res_units=1
     ).to(device)
     return load_model(vessel_model_location, model, device)
@@ -99,7 +117,7 @@ if __name__ == '__main__':
     from_annotations = True
 
     device = 'cuda' if is_gpu_available() else 'cpu'
-    vessel_model_location = f'{os.getcwd()}/models/train36_vessel'
+    vessel_model_location = f'{os.getcwd()}/models/train35_vessel_16-256_diceloss'
     model = prepare_vessel_model(vessel_model_location, device)
     criterion = losses.DiceLoss(sigmoid=True)
     
@@ -119,28 +137,35 @@ if __name__ == '__main__':
     model.eval()
     test_loss = 0.0
     test_dice = 0.0
+    test_iou = 0.0
+    test_precision = 0.0
+    test_recall = 0.0
 
     with tqdm(test_loader, desc='Testing', leave=False) as vbar:
         with torch.no_grad():
             for test_scans, test_masks in vbar:
                 test_scans, test_masks = test_scans.to('cuda'), test_masks.to('cuda')
-                test_outputs = model(test_scans)
+                preds = model(test_scans)
 
-                loss = criterion(test_outputs, test_masks).item()
-                test_loss += loss
-                test_outputs = torch.sigmoid(test_outputs) > 0.5
-                dice = dice_coefficient(test_outputs, test_masks).item()
-                test_dice += dice
+                test_loss += criterion(preds, test_masks).item()
+                preds = (torch.sigmoid(preds) > 0.5).float()
 
-                
-                # create_ply(test_outputs.float().detach().cpu().numpy()[0, 0], 'vess.ply')
-                # create_ply(test_masks.float().detach().cpu().numpy()[0, 0], 'vess_label.ply')
-                break
+                preds_flat = preds.view(-1)
+                masks_flat = test_masks.view(-1)
+
+                test_dice += dice_coefficient(preds_flat, masks_flat).item()
+                test_iou += iou_score(preds_flat, masks_flat).item()
+                test_precision += precision_score(preds_flat, masks_flat).item()
+                test_recall += recall_score(preds_flat, masks_flat).item()
                 
     test_loss /= len(test_loader)
     test_dice /= len(test_loader)
+    test_iou /= len(test_loader)
+    test_precision /= len(test_loader)
+    test_recall /= len(test_loader)
 
-    print(f'loss: {round(test_loss, 5)}')
-    print(f'dice: {round(test_dice, 5)}')
-
-    exit()
+    print(f'Loss:     {test_loss:.4f}')
+    print(f'Dice:     {test_dice:.4f}')
+    print(f'IoU:      {test_iou:.4f}')
+    print(f'Precision:{test_precision:.4f}')
+    print(f'Recall:   {test_recall:.4f}')
