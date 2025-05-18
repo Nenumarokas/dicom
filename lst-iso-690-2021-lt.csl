@@ -1,318 +1,329 @@
-<?xml version='1.0' encoding='utf-8'?>
-<ns0:style xmlns:ns0="http://purl.org/net/xbiblio/csl" version="1.0" default-locale="lt-LT" class="in-text">
-    <ns0:info>
-        <ns0:title>LST ISO 690:2021 (numeric, Lithuanian)</ns0:title>
-        <ns0:id>https://www.zotero.org/styles/lst-iso-690-2021-lt</ns0:id>
-        <ns0:link href="https://raw.github.com/pypt/csl-lithuanian/master/iso-690-numeric-lt.xml" rel="self" />
-        <ns0:author>
-            <ns0:name>Linas Valiukas</ns0:name>
-            <ns0:email>shirshegsm@gmail.com</ns0:email>
-        </ns0:author>
-        <ns0:category citation-format="numeric" />
-        <ns0:category field="generic-base" />
-        <ns0:updated>2012-03-23T09:00:00+00:00</ns0:updated>
-        <ns0:summary>ISO 690 style for the Vilnius university, Faculty of Communication. (Numeric version)</ns0:summary>
-        <ns0:link href="http://www.kf.vu.lt/uploads/docs/Studiju%20dokumentai/metodiniai_nurodymai090204.pdf" rel="documentation" />
-        <ns0:rights>This work is licensed under a Creative Commons Attribution-ShareAlike 3.0 License: http://creativecommons.org/licenses/by-sa/3.0/</ns0:rights>
-    </ns0:info>
-    <ns0:locale>
-        <ns0:terms>
-            <ns0:term name="anonymous">Anon.</ns0:term>
-            <ns0:term name="no date">[no date]</ns0:term>
-            <ns0:term name="in">in</ns0:term>
-            <ns0:term name="online">interaktyvus</ns0:term>
-            <ns0:term name="accessed">Cituota</ns0:term>
-            <ns0:term name="retrieved">Prieiga per internetą</ns0:term>
-            <ns0:term name="from">from</ns0:term>
-            <ns0:term name="page" form="short">
-                <ns0:single>p.</ns0:single>
-                <ns0:multiple>pp.</ns0:multiple>
-            </ns0:term>
-        </ns0:terms>
-    </ns0:locale>
+<?xml version="1.0" encoding="utf-8" ?>
+<style xmlns="http://purl.org/net/xbiblio/csl" version="1.0" default-locale="lt-LT" class="in-text">
+    <info>
+        <title>ISO-690 (numeric, Lithuanian)</title>
+        <id>https://github.com/pypt/csl-lithuanian</id>
+        <link href="https://raw.github.com/pypt/csl-lithuanian/master/iso-690-numeric-lt.xml" rel="self" />
+        <author>
+            <name>Linas Valiukas</name>
+            <email>shirshegsm@gmail.com</email>
+        </author>
+        <category citation-format="numeric" />
+        <category field="generic-base" />
+        <updated>2012-03-23T09:00:00+00:00</updated>
+        <summary>ISO 690 style for the Vilnius university, Faculty of Communication. (Numeric version)</summary>
+        <link href="http://www.kf.vu.lt/uploads/docs/Studiju%20dokumentai/metodiniai_nurodymai090204.pdf" rel="documentation"/>
+        <rights>This work is licensed under a Creative Commons Attribution-ShareAlike 3.0 License: http://creativecommons.org/licenses/by-sa/3.0/</rights>
+    </info>
+    <locale>
+        <terms>
+            <term name="anonymous">Anon.</term>
+            <term name="no date">[no date]</term>
+            <term name="in">in</term>
+            <term name="online">interaktyvus</term>
+            <term name="accessed">žiūrėta</term>
+            <term name="retrieved">Available</term>
+            <term name="from">from</term>
+            <term name="page" form="short">
+                <single>p.</single>
+                <multiple>pp.</multiple>
+            </term>
+        </terms>
+    </locale>
+    <!-- macro block 
+     -->
+    <macro name="author">
+        <names variable="author" suffix=" ">
+            <name sort-separator=", " initialize-with="." name-as-sort-order="all" delimiter=" - " delimiter-precedes-last="always" et-al-min="3">
+                <name-part name="family" text-case="uppercase"/>
+                <name-part name="given" text-case="capitalize-first"/>
+            </name>
+            <label form="short" text-case="capitalize-first" suffix=". "/>
+            <substitute>
+                <names variable="editor"/>
+            </substitute>
+        </names>
+    </macro>
     
-    <ns0:macro name="author">
-        <ns0:names variable="author" suffix=" ">
-            <ns0:name sort-separator=", " initialize-with="." name-as-sort-order="all" delimiter=" - " delimiter-precedes-last="always" et-al-min="3">
-                <ns0:name-part name="family" text-case="uppercase" />
-                <ns0:name-part name="given" text-case="uppercase" />
-            </ns0:name>
-            <ns0:label form="short" text-case="capitalize-first" suffix=". " />
-            <ns0:substitute>
-                <ns0:names variable="editor" />
-            </ns0:substitute>
-        </ns0:names>
-    </ns0:macro>
-    
-    <ns0:macro name="container_author">
-        <ns0:names variable="container-author" suffix=" ">
-            <ns0:name sort-separator=", " initialize-with="." name-as-sort-order="all" delimiter=" - " delimiter-precedes-last="always" et-al-min="3">
-                <ns0:name-part name="family" text-case="uppercase" />
-                <ns0:name-part name="given" text-case="uppercase" />
-            </ns0:name>
-            <ns0:label form="short" text-case="capitalize-first" suffix=". " />
-            <ns0:substitute>
-                <ns0:names variable="editor" />
-            </ns0:substitute>
-        </ns0:names>
-    </ns0:macro>
+    <macro name="container_author">
+        <names variable="container-author" suffix=" ">
+            <name sort-separator=", " initialize-with="." name-as-sort-order="all" delimiter=" - " delimiter-precedes-last="always" et-al-min="3" >
+                <name-part name="family" text-case="uppercase"/>
+                <name-part name="given" text-case="capitalize-first"/>
+            </name>
+            <label form="short" text-case="capitalize-first" suffix=". "/>
+            <substitute>
+                <names variable="editor"/>
+            </substitute>
+        </names>
+    </macro>
 
     
-    <ns0:macro name="title">
-        <ns0:group delimiter=" " suffix=". ">
-        <ns0:choose>
-            <ns0:if type="book thesis" match="any">
-                <ns0:text variable="title" font-style="italic" />
-            </ns0:if>
-            <ns0:else-if type="paper-conference chapter article-journal article-magazine article-newspaper webpage" match="any">
-                <ns0:text variable="title" suffix=". " />
-                <ns0:text term="in" text-case="capitalize-first" suffix=" " />
-                <ns0:text macro="container_author" />
-                <ns0:choose>
-                   <ns0:if variable="container-title">
-                      <ns0:text variable="container-title" font-style="italic" suffix=" " />
-                  </ns0:if>
-                  <ns0:else>
-                     <ns0:text variable="event" font-style="italic" suffix=" " />
-                  </ns0:else>
-               </ns0:choose>
-            </ns0:else-if>
-        </ns0:choose>
-        <ns0:text macro="publication_source" />
-        </ns0:group>        
-    </ns0:macro>
-    <ns0:macro name="publication_source">
-        <ns0:choose>
-        <ns0:if variable="URL">
-            <ns0:text term="online" prefix="[" suffix="]" />
-        </ns0:if>
-        </ns0:choose>
-    </ns0:macro>
-    <ns0:macro name="editor">
-        <ns0:names variable="editor">
-            <ns0:label form="short" text-case="capitalize-first" suffix=". " />
-            <ns0:name and="text" delimiter=", " />
-        </ns0:names>
-    </ns0:macro>
-    <ns0:macro name="series-editor">
-        <ns0:names variable="original-author">
-            <ns0:label form="short" text-case="capitalize-first" suffix=". " />
-            <ns0:name and="text" delimiter=", " />
-        </ns0:names>
-    </ns0:macro>
+    <macro name="title">
+        <group delimiter=" " suffix=". ">
+        <choose>
+            <if type="book thesis" match="any">
+                <text variable="title" font-style="italic" />
+            </if>
+            <else-if type="paper-conference chapter article-journal article-magazine article-newspaper webpage" match="any">
+                <text variable="title" suffix=". " />
+                <text term="in" text-case="capitalize-first" suffix=" " />
+                <text macro="container_author" />
+                <choose>
+                   <if variable="container-title">
+                      <text variable="container-title" font-style="italic" suffix=" " />
+                  </if>
+                  <else>
+                     <text variable="event" font-style="italic" suffix=" " />
+                  </else>
+               </choose>
+            </else-if>
+        </choose>
+        <text macro="publication_source" />
+        </group>        
+    </macro>
+    <macro name="publication_source">
+        <choose>
+        <if variable="URL">
+            <text term="online" prefix="[" suffix="]" />
+        </if>
+        </choose>
+    </macro>
+    <macro name="editor">
+        <names variable="editor">
+            <label form="short" text-case="capitalize-first" suffix=". "/>
+            <name and="text" delimiter=", "/>
+        </names>
+    </macro>
+    <macro name="series-editor">
+        <names variable="original-author">
+            <label form="short" text-case="capitalize-first" suffix=". "/>
+            <name and="text" delimiter=", "/>
+        </names>
+    </macro>
    
   
-    <ns0:macro name="author-short">
-        <ns0:names variable="author">
-            <ns0:name form="short" and="text" delimiter=", " />
-            <ns0:substitute>
-                <ns0:names variable="editor" />
-                <ns0:names variable="translator" />
-                <ns0:text macro="anon" />
-            </ns0:substitute>
-        </ns0:names>
-    </ns0:macro>
-    <ns0:macro><group prefix=" [Cituota " suffix="]. "><date variable="accessed"><date-part name="year" suffix=" m. " /><date-part name="month" suffix=" " /><date-part name="day" /></date></group></ns0:macro><ns0:macro name="availability">
-        <ns0:choose>
-            <ns0:if variable="URL">
-                <ns0:text value="Prieiga per internetą: " />
-                <ns0:text variable="URL" prefix="&lt;" suffix="&gt;" />
-            </ns0:if>
-        </ns0:choose>
-    </ns0:macro>
+    <macro name="author-short">
+        <names variable="author">
+            <name form="short" and="text" delimiter=", "/>
+            <substitute>
+                <names variable="editor"/>
+                <names variable="translator"/>
+                <text macro="anon"/>
+            </substitute>
+        </names>
+    </macro>
+    <macro name="time_data">
+        <group prefix=" [žiūrėta " suffix="]. ">
+            <!--<text term="cited" text-case="lowercase" suffix=" "/>-->
+            <date variable="accessed">
+                <date-part name="year" suffix="-"/>
+                <date-part name="month" suffix="-" form="numeric-leading-zeros" />
+                <date-part name="day" form="numeric-leading-zeros" />
+            </date>
+        </group>
+    </macro>
+    <macro name="availability">
+        <choose>
+            <if variable="URL">
+                <text value="Prieiga per internetą: "/>
+                <text variable="URL" prefix="&lt;" suffix="&gt;"/>
+            </if>
+        </choose>
+    </macro>
     
-      <ns0:macro name="publisher">
-        <ns0:group delimiter=": ">
-            <ns0:choose>
-                <ns0:if variable="publisher-place">
-                    <ns0:text variable="publisher-place" />
-                </ns0:if>
-                <ns0:else>
-                    
-                    <ns0:text value="[s.l.]" />
-                </ns0:else>
-            </ns0:choose>
-            <ns0:text variable="publisher" />
-        </ns0:group>
-    </ns0:macro>
-    <ns0:macro name="ref-date">
-        <ns0:date variable="issued">
-            <ns0:date-part name="month" suffix=" " />
-            <ns0:date-part name="year" />
-        </ns0:date>
-    </ns0:macro>
-    <ns0:macro name="year-date">
-        <ns0:date variable="issued">
-            <ns0:date-part name="year" suffix=". " />
-        </ns0:date>
-    </ns0:macro>
-    <ns0:macro name="date">
-        <ns0:date variable="issued">
-            <ns0:date-part name="year" suffix=". " />
-        </ns0:date>
-    </ns0:macro>
-    <ns0:macro name="pages">
-        <ns0:choose>
-            <ns0:if type="book thesis" match="any">
-                <ns0:text variable="number-of-pages" suffix=" p." />
-            </ns0:if>
-            <ns0:else-if type="chapter paper-conference article-newspaper" match="any">
-                <ns0:text variable="page" prefix="p. " suffix=". " />
-            </ns0:else-if>
-        </ns0:choose>
-    </ns0:macro>
+      <macro name="publisher">
+        <group delimiter=": " >
+            <choose>
+                <if variable="publisher-place">
+                    <text variable="publisher-place" />
+                </if>
+                <else>
+                    <!-- sine loco (whithout place) -->
+                    <text value="[s.l.]" />
+                </else>
+            </choose>
+            <text variable="publisher"/>
+        </group>
+    </macro>
+    <macro name="ref-date">
+        <date variable="issued">
+            <date-part name="month" suffix=" "/>
+            <date-part name="year"/>
+        </date>
+    </macro>
+    <macro name="year-date">
+        <date variable="issued">
+            <date-part name="year" suffix=". "/>
+        </date>
+    </macro>
+    <macro name="date">
+        <date variable="issued">
+            <date-part name="year" suffix=". "/>
+        </date>
+    </macro>
+    <macro name="pages">
+        <choose>
+            <if type="book thesis" match="any">
+                <text variable="number-of-pages" suffix=" p." />
+            </if>
+            <else-if type="chapter paper-conference article-newspaper" match="any">
+                <text variable="page" prefix="p. " suffix=". "/>
+            </else-if>
+        </choose>
+    </macro>
     
-    <ns0:macro name="day-month">
-        <ns0:date variable="issued">
-            <ns0:date-part name="month" />
-            <ns0:date-part name="day" prefix=" " />
-        </ns0:date>
-    </ns0:macro>
-    
-    
-    <ns0:macro name="archive">
-        <ns0:group delimiter=". ">
-            <ns0:text variable="archive_location" text-case="capitalize-first" />
-            <ns0:text variable="archive" />
-            <ns0:text variable="archive-place" />
-        </ns0:group>
-    </ns0:macro>
-    
-    <ns0:macro name="notes">
-        <ns0:text variable="note" suffix=". " />
-    </ns0:macro>
-    
-    <ns0:macro name="edition">
-        <ns0:text variable="edition" suffix=". Ed." />
-    </ns0:macro>
-    
-    <ns0:macro name="publisher_block">
-        <ns0:group delimiter=", ">
-            <ns0:text macro="publisher" />
-            <ns0:text macro="year-date" />
-        </ns0:group>
-    </ns0:macro>
-    
-    <ns0:macro name="issue">
-        <ns0:group delimiter=", ">
-            <ns0:text variable="volume" prefix="Vol. " />
-            <ns0:text variable="issue" prefix="no. " />
-            <ns0:text variable="page" prefix="p. " />
-        </ns0:group>
-    </ns0:macro>
-    
-    <ns0:macro name="isbn">
-        <ns0:text prefix="ISBN " variable="ISBN" />
-    </ns0:macro>
+    <macro name="day-month">
+        <date variable="issued">
+            <date-part name="month"/>
+            <date-part name="day" prefix=" "/>
+        </date>
+    </macro>
     
     
+    <macro name="archive">
+        <group delimiter=". ">
+            <text variable="archive_location" text-case="capitalize-first"/>
+            <text variable="archive"/>
+            <text variable="archive-place"/>
+        </group>
+    </macro>
     
-    <ns0:citation>
-        <ns0:sort>	
-            <ns0:key variable="citation-number" sort="ascending" />
-        </ns0:sort>
+    <macro name="notes">
+        <text variable="note" suffix=". " />
+    </macro>
+    
+    <macro name="edition">
+        <text variable="edition" suffix=". Ed." />
+    </macro>
+    
+    <macro name="publisher_block">
+        <group delimiter=", ">
+            <text macro="publisher"/>
+            <text macro="year-date"/>
+        </group>
+    </macro>
+    
+    <macro name="issue">
+        <group delimiter=", ">
+            <text variable="volume" prefix="Vol.&#xA0;" />
+            <text variable="issue" prefix="no.&#xA0;" />
+            <text variable="page" prefix="p.&#xA0;" />
+        </group>
+    </macro>
+    
+    <macro name="isbn">
+        <text prefix="ISBN " variable="ISBN" />
+    </macro>
+    
+    <!-- macro block end -->
+    
+    <citation  collapse="citation-number">
+        <sort>	
+            <key variable="citation-number" sort="ascending"/>
+        </sort>
         
-        <ns0:layout vertical-align="sup" prefix="[" suffix="]" delimiter=",">
-            <ns0:text variable="citation-number" />
-        </ns0:layout>
+        <layout prefix="[" suffix="]" delimiter=",">
+            <text variable="citation-number"/>
+        </layout>
         
-    </ns0:citation>
-    <ns0:bibliography>
-        <ns0:sort>
-            <ns0:key macro="author" />
-            <ns0:key variable="title" />
-        </ns0:sort>
-        <ns0:layout suffix=".">
-            <ns0:text variable="citation-number" suffix=".  " />
-            <ns0:text macro="author" suffix="" />
-            <ns0:choose>
-                <ns0:if type="book">
-                    <ns0:group delimiter=" ">
-                        <ns0:text macro="title" prefix=" " suffix="." />
-                        <ns0:text macro="edition" />
-                        <ns0:text macro="editor" suffix="." />
-                        <ns0:group delimiter=", ">
-                            <ns0:text macro="publisher" />
-                            <ns0:text macro="year-date" />
-                        </ns0:group>
-                        <ns0:text macro="pages" />
-                        <ns0:text prefix="ISBN " variable="ISBN" />
-                    </ns0:group>
-                </ns0:if>
-                <ns0:else-if type="article-journal article-magazine" match="any">
-                    <ns0:text macro="title" />
-                    <ns0:text macro="edition" />
-                    <ns0:text macro="date" />
-                    <ns0:text macro="issue" suffix=". " />
-                    <ns0:text macro="time_data" suffix=". " />
-                    <ns0:text macro="doi" suffix=". " />
-                    <ns0:text macro="availability" />
-                </ns0:else-if>
-                <ns0:else-if type="article-newspaper">
-                    <ns0:text macro="title" />
-                    <ns0:text macro="edition" />
-                    <ns0:text macro="publisher_block" />
-                    <ns0:text macro="pages" />
-                    <ns0:text macro="time_data" suffix=". " />
-                    <ns0:text macro="availability" /> 
-                </ns0:else-if>
+    </citation>
+    <bibliography>
+        <sort>
+            <key macro="author"/>
+            <key variable="title"/>
+        </sort>
+        <layout suffix=".">
+            <text variable="citation-number" suffix=".  " />
+            <text macro="author" suffix=""/>
+            <choose>
+                <if type="book">
+                    <group delimiter=" ">
+                        <text macro="title" prefix=" " suffix="."/>
+                        <text macro="edition" />
+                        <text macro="editor" suffix="."/>
+                        <group delimiter=", ">
+                            <text macro="publisher"/>
+                            <text macro="year-date"/>
+                        </group>
+                        <text macro="pages" />
+                        <text prefix="ISBN " variable="ISBN" />
+                    </group>
+                </if>
+                <else-if type="article-journal article-magazine" match="any">
+                    <text macro="title" />
+                    <text macro="edition" />
+                    <text macro="date" />
+                    <text macro="issue" suffix=". "/>
+                    <text macro="time_data" suffix=". " />
+                    <text macro="doi" suffix=". "/>
+                    <text macro="availability" />
+                </else-if>
+                <else-if type="article-newspaper">
+                    <text macro="title" />
+                    <text macro="edition" />
+                    <text macro="publisher_block" />
+                    <text macro="pages" />
+                    <text macro="time_data" suffix=". " />
+                    <text macro="availability" /> 
+                </else-if>
                 
-                <ns0:else-if type="chapter entry entry-dictionary entry-encyclopedia" match="any">
-                    <ns0:text macro="title" />
-                    <ns0:text macro="edition" />
-                    <ns0:text macro="publisher_block" />
-                    <ns0:text macro="pages" />
-                    <ns0:text macro="time_data" />
-                    <ns0:text macro="isbn" />
-                    <ns0:text macro="availability" />
-                </ns0:else-if>
+                <else-if type="chapter entry entry-dictionary entry-encyclopedia" match="any">
+                    <text macro="title" />
+                    <text macro="edition" />
+                    <text macro="publisher_block" />
+                    <text macro="pages" />
+                    <text macro="time_data" />
+                    <text macro="isbn" />
+                    <text macro="availability" />
+                </else-if>
                 
-                <ns0:else-if type="paper-conference">
-                    <ns0:text macro="title" />
-                    <ns0:text macro="publisher_block" />
-                    <ns0:text macro="pages" />
-                    <ns0:text macro="time_data" />
-                    <ns0:text macro="availability" />
-                </ns0:else-if>
+                <else-if type="paper-conference">
+                    <text macro="title" />
+                    <text macro="publisher_block" />
+                    <text macro="pages" />
+                    <text macro="time_data" />
+                    <text macro="availability" />
+                </else-if>
                 
-                <ns0:else-if type="thesis">
-                    <ns0:text macro="title" />
-                    <ns0:text macro="publisher_block" />
-                    <ns0:text macro="time_data" />
-                    <ns0:text macro="availability" />
-                </ns0:else-if>
+                <else-if type="thesis">
+                    <text macro="title" />
+                    <text macro="publisher_block" />
+                    <text macro="time_data" />
+                    <text macro="availability" />
+                </else-if>
                 
-                <ns0:else-if type="patent">
-                    <ns0:text macro="title" />
-                    <ns0:text macro="date" />
-                    <ns0:text variable="publisher-place" />
-                    <ns0:text macro="time_data" />
-                    <ns0:text macro="availability" />
-                </ns0:else-if>
+                <else-if type="patent">
+                    <text macro="title" />
+                    <text macro="date" />
+                    <text variable="publisher-place" />
+                    <text macro="time_data" />
+                    <text macro="availability" />
+                </else-if>
                 
-                <ns0:else-if type="post-weblog post webpage" match="any">
-                    <ns0:text macro="title" />
-                    <ns0:text macro="year-date" />
-                    <ns0:text macro="time_data" />
-                    <ns0:text macro="availability" />
-                </ns0:else-if>
+                <else-if type="post-weblog post webpage" match="any">
+                    <text macro="title" />
+                    <text macro="year-date" />
+                    <text macro="time_data" />
+                    <text macro="availability" />
+                </else-if>
                 
-                <ns0:else>
-                    <ns0:group suffix=".">
-                        <ns0:text macro="title" prefix=" " />
-                        <ns0:text macro="editor" prefix=" " />
-                    </ns0:group>
-                    <ns0:group delimiter=", ">
-                        <ns0:text macro="publisher" />
-                        <ns0:text macro="year-date" />
-                    </ns0:group>
-                    <ns0:text macro="time_data" />
-                    <ns0:text macro="pages" />
-                    <ns0:text macro="notes" />
-                    <ns0:text macro="availability" />
-                </ns0:else>
+                <else>
+                    <group suffix="." >
+                        <text macro="title" prefix=" " />
+                        <text macro="editor" prefix=" "/>
+                    </group>
+                    <group delimiter=", ">
+                        <text macro="publisher"/>
+                        <text macro="year-date"/>
+                    </group>
+                    <text macro="time_data" />
+                    <text macro="pages" />
+                    <text macro="notes" />
+                    <text macro="availability" />
+                </else>
                 
-            </ns0:choose>
-        </ns0:layout>
-    </ns0:bibliography>
-</ns0:style>
+            </choose>
+        </layout>
+    </bibliography>
+</style> 
