@@ -207,20 +207,100 @@
         
     </citation>
     <bibliography>
-    <sort>
-        <key variable="citation-number"/>
-    </sort>
-    <layout prefix="[" suffix="]" delimiter=" ">
-        <text variable="citation-number" suffix="]&#9;"/>
-        <text macro="author" suffix=". "/>
-        <text macro="title" suffix=". "/>
-        <text macro="container-title" suffix=". "/>
-        <group delimiter=", ">
-        <text macro="volume-issue"/>
-        <text macro="pages"/>
-        <text macro="issued"/>
-        </group>
-        <text macro="doi"/>
-    </layout>
+        <sort>
+            <key variable="citation-number"/>
+        </sort>
+        <layout suffix=".">
+            <text variable="citation-number" suffix=".  " />
+            <text macro="author" suffix=""/>
+            <choose>
+                <if type="book">
+                    <group delimiter=" ">
+                        <text macro="title" prefix=" " suffix="."/>
+                        <text macro="edition" />
+                        <text macro="editor" suffix="."/>
+                        <group delimiter=", ">
+                            <text macro="publisher"/>
+                            <text macro="year-date"/>
+                        </group>
+                        <text macro="pages" />
+                        <text prefix="ISBN " variable="ISBN" />
+                    </group>
+                </if>
+                <else-if type="article-journal article-magazine" match="any">
+                    <text macro="title" />
+                    <text macro="edition" />
+                    <text macro="date" />
+                    <text macro="issue" suffix=". "/>
+                    <text macro="time_data" suffix=". " />
+                    <text macro="doi" suffix=". "/>
+                    <text macro="availability" />
+                </else-if>
+                <else-if type="article-newspaper">
+                    <text macro="title" />
+                    <text macro="edition" />
+                    <text macro="publisher_block" />
+                    <text macro="pages" />
+                    <text macro="time_data" suffix=". " />
+                    <text macro="availability" /> 
+                </else-if>
+                
+                <else-if type="chapter entry entry-dictionary entry-encyclopedia" match="any">
+                    <text macro="title" />
+                    <text macro="edition" />
+                    <text macro="publisher_block" />
+                    <text macro="pages" />
+                    <text macro="time_data" />
+                    <text macro="isbn" />
+                    <text macro="availability" />
+                </else-if>
+                
+                <else-if type="paper-conference">
+                    <text macro="title" />
+                    <text macro="publisher_block" />
+                    <text macro="pages" />
+                    <text macro="time_data" />
+                    <text macro="availability" />
+                </else-if>
+                
+                <else-if type="thesis">
+                    <text macro="title" />
+                    <text macro="publisher_block" />
+                    <text macro="time_data" />
+                    <text macro="availability" />
+                </else-if>
+                
+                <else-if type="patent">
+                    <text macro="title" />
+                    <text macro="date" />
+                    <text variable="publisher-place" />
+                    <text macro="time_data" />
+                    <text macro="availability" />
+                </else-if>
+                
+                <else-if type="post-weblog post webpage" match="any">
+                    <text macro="title" />
+                    <text macro="year-date" />
+                    <text macro="time_data" />
+                    <text macro="availability" />
+                </else-if>
+                
+                <else>
+                    <group suffix="." >
+                        <text macro="title" prefix=" " />
+                        <text macro="editor" prefix=" "/>
+                    </group>
+                    <group delimiter=", ">
+                        <text macro="publisher"/>
+                        <text macro="year-date"/>
+                    </group>
+                    <text macro="time_data" />
+                    <text macro="pages" />
+                    <text macro="notes" />
+                    <text macro="availability" />
+                </else>
+                
+            </choose>
+        </layout>
     </bibliography>
 </style> 
