@@ -218,11 +218,7 @@
     
     <!-- macro block end -->
     
-    <citation  collapse="citation-number">
-        <sort>	
-            <key variable="citation-number" sort="ascending"/>
-        </sort>
-        
+    <citation collapse="citation-number">
         <layout prefix="[" suffix="]" delimiter=",">
             <text variable="citation-number"/>
         </layout>
