@@ -299,12 +299,9 @@
       </if>
     </choose>
   </macro>
-  <citation collapse="citation-number">
-    <sort>
-      <key variable="citation-number"/>
-    </sort>
-    <layout delimiter=", ">
-      <group delimiter=", " prefix="[" suffix="]">
+  <citation>
+    <layout prefix="[" suffix="]" delimiter=", " collapse="citation-number">
+      <group delimiter=", ">
         <text variable="citation-number"/>
         <text macro="citation-locator"/>
       </group>
