@@ -127,7 +127,7 @@
         <choose>
             <if variable="URL">
                 <text value="Prieiga per internetą: "/>
-                <text variable="URL" prefix="&lt;" suffix="&gt;"/>
+                <text variable="URL"/>
             </if>
         </choose>
     </macro>
