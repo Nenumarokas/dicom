@@ -300,8 +300,11 @@
     </choose>
   </macro>
   <citation>
+    <sort>
+      <key variable="citation-number"/>
+    </sort>
     <layout delimiter=", ">
-      <group delimiter=", " prefix="[" suffix="]">
+      <group delimiter=", " prefix="[aa" suffix="aa]">
         <text variable="citation-number"/>
         <text macro="citation-locator"/>
       </group>
